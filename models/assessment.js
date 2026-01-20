@@ -2,6 +2,7 @@ const { Schema, model } = require("mongoose");
 const QuestionSchema = require("./questions");
 
 const SectionSchema = Schema({
+    customId: String,
     title: String,
     subtitle: String,
     image:String,

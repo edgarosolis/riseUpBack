@@ -14,7 +14,10 @@ const QuestionSchema = Schema({
         enum: ['multiple_choice', 'text', 'rating'], 
         default: 'multiple_choice' 
     },
-    options: [String] // Solo si es multiple_choice
+    options: [{
+        text: String,
+        category: String
+    }] // Solo si es multiple_choice
 });
 
 module.exports = QuestionSchema
