@@ -1,6 +1,7 @@
 const { response,request } = require("express");
 const User = require('../models/user');
 const bcryptjs = require('bcryptjs');
+const Submission = require("../models/submission");
 
 
 const getAllUsers = async(req=request,res=response)=>{
@@ -56,7 +57,13 @@ const createUser = async(req,res=response)=>{
     user.password = bcryptjs.hashSync(password,salt);
     user.rawPassword = password;
 
+    const submission = new Submission({
+        assessmentId: "69694fa65b16328a2cd50da7", // TODO CHANGE LOGIC WHEN MORE ASSESSMENT CREATED
+        userId: user._id
+    });
+
     await user.save();
+    await submission.save();
 
     return res.json({
         msg:"User created",
