@@ -1,6 +1,11 @@
 const { Schema, model } = require("mongoose");
 const QuestionSchema = require("./questions");
 
+const TableRowSchema = new Schema({
+    sphere: { type: String, required: true },
+    definition: { type: String, required: true }
+}, { _id: false });
+
 const SectionSchema = Schema({
     customId: String,
     title: String,
@@ -15,6 +20,7 @@ const SectionSchema = Schema({
             type: Boolean,
             default:false
         },
+        tableInfo: [TableRowSchema],
         questions: [QuestionSchema] 
     }
 });

@@ -63,32 +63,31 @@ const getFinalResults = async (countsBySection, assessmentId) => {
                 return a[0].localeCompare(b[0]);
             }
         });
-
+         
         // 2. Tomamos los dos más altos
         const topTwo = sorted.slice(0, 2); 
-        let categoryKey = "";
+        const [first,second] = topTwo;
+        let categoryKey = first[0];
 
         if(sectionKey === "s1"){
-            const [first,second] = topTwo;
             if((first[1] >= 9) && ((first[1]-second[1]) >= 2)){
                 categoryKey = first[0];
-            }else if(second[1] >= 4){
+            }
+            if(second[1] >= 4){
                 categoryKey = first[0] +" + "+second[0];
-            }else if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
+            }
+            if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
                 categoryKey = first[0] +" and "+second[0];
-            }else{
-                categoryKey = first[0];
             }
         }else{
-            const [first,second] = topTwo;
             if((first[1] >= 10) && ((first[1]-second[1]) >= 2)){
                 categoryKey = first[0];
-            }else if(second[1] >= 4){
+            }
+            if(second[1] >= 4){
                 categoryKey = first[0] +" + "+second[0];
-            }else if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
-                categoryKey = first[0] +" and "+second[0];
-            }else{
-                categoryKey = first[0];
+            }
+            if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
+                categoryKey = first[0] +" + "+second[0];
             }
         }
 
