@@ -17,7 +17,7 @@ const QuestionSchema = Schema({
     options: [{
         text: String,
         category: String
-    }] // Solo si es multiple_choice
+    }]
 });
 
 module.exports = QuestionSchema

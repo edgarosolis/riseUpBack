@@ -8,7 +8,15 @@ const SectionSchema = Schema({
     image:String,
     color:String,
     description: String,
-    questions: [QuestionSchema]
+    questions: [QuestionSchema],
+    report:{
+        intro: String,
+        hasTable: {
+            type: Boolean,
+            default:false
+        },
+        questions: [QuestionSchema] 
+    }
 });
 
 const AssessmentSchema = new Schema({
