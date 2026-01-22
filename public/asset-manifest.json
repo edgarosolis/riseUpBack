@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/static/css/main.6ad16e89.css",
-    "main.js": "/static/js/main.14b9d3a6.js",
+    "main.js": "/static/js/main.69af78cc.js",
     "static/js/453.40d607ea.chunk.js": "/static/js/453.40d607ea.chunk.js",
     "static/media/RiseUpLogo.png": "/static/media/RiseUpLogo.4c2ee340c88fe1968b5c.png",
     "index.html": "/index.html",
     "main.6ad16e89.css.map": "/static/css/main.6ad16e89.css.map",
-    "main.14b9d3a6.js.map": "/static/js/main.14b9d3a6.js.map",
+    "main.69af78cc.js.map": "/static/js/main.69af78cc.js.map",
     "453.40d607ea.chunk.js.map": "/static/js/453.40d607ea.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.6ad16e89.css",
-    "static/js/main.14b9d3a6.js"
+    "static/js/main.69af78cc.js"
   ]
 }
