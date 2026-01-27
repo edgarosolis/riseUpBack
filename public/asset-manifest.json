@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.6ad16e89.css",
-    "main.js": "/static/js/main.b5a3626c.js",
+    "main.js": "/static/js/main.194d8a40.js",
     "static/js/453.a151b5a1.chunk.js": "/static/js/453.a151b5a1.chunk.js",
     "static/media/OutroReport.png": "/static/media/OutroReport.ae1ce995d2e261f3573a.png",
     "static/media/RiseUpLogo.png": "/static/media/RiseUpLogo.4c2ee340c88fe1968b5c.png",
@@ -10,11 +10,11 @@
     "static/media/Section3.png": "/static/media/Section3.217b17053f87c1193882.png",
     "index.html": "/index.html",
     "main.6ad16e89.css.map": "/static/css/main.6ad16e89.css.map",
-    "main.b5a3626c.js.map": "/static/js/main.b5a3626c.js.map",
+    "main.194d8a40.js.map": "/static/js/main.194d8a40.js.map",
     "453.a151b5a1.chunk.js.map": "/static/js/453.a151b5a1.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.6ad16e89.css",
-    "static/js/main.b5a3626c.js"
+    "static/js/main.194d8a40.js"
   ]
 }
