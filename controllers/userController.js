@@ -16,6 +16,18 @@ const getAllUsers = async(req=request,res=response)=>{
 
 }
 
+const getAllUsersNotAdmin = async(req=request,res=response)=>{
+    try {
+        const users = await User.find({status:true, rol:"user"});
+        return res.json(users);
+    
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error})
+    }
+
+}
+
 const getUserById = async(req=request,res=response)=>{
     
     const {id} = req.params;
@@ -109,6 +121,7 @@ const deleteUser = async(req=request,res=response)=>{
 
 module.exports = {
     getAllUsers,
+    getAllUsersNotAdmin,
     getUserById,
     createUser,
     updateUser,

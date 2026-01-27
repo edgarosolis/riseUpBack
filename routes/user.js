@@ -3,10 +3,12 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { userIdExists } = require("../helpers/dbValidators");
-const { getUserById, createUser, updateUser, deleteUser, getAllUsers } = require("../controllers/userController");
+const { getUserById, createUser, updateUser, deleteUser, getAllUsers, getAllUsersNotAdmin } = require("../controllers/userController");
 
 
 router.get('/',getAllUsers);
+
+router.get('/allUserAdmin',getAllUsersNotAdmin);
 
 router.get('/:id',[
     check('id','ID not valid').isMongoId(),
