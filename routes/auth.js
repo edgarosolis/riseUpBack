@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require("express-validator");
 const { validateFiedls } = require("../middlewares/validateFields");
 
-const { loginController } = require("../controllers/authController");
+const { loginController, loginAdminController } = require("../controllers/authController");
 
 router.post('/login',[
     check('email','Email not valid').isEmail(),
@@ -11,10 +11,10 @@ router.post('/login',[
     validateFiedls
 ],loginController);
 
-/* router.post('/loginAdmin',[
+router.post('/loginAdmin',[
     check('email','Email not valid').isEmail(),
     check('password','Password not valid').not().isEmpty(),
     validateFiedls
-],loginAdminController); */
+],loginAdminController);
 
 module.exports = router;  

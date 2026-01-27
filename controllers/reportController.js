@@ -67,41 +67,55 @@ const getFinalResults = async (countsBySection, assessmentId) => {
         // 2. Tomamos los dos más altos
         const topTwo = sorted.slice(0, 2); 
         const [first,second] = topTwo;
-        let categoryKey = first[0];
+        let searchQueries = new Set();
 
         if(sectionKey === "s1"){
             if((first[1] >= 9) && ((first[1]-second[1]) >= 2)){
-                categoryKey = first[0];
+                searchQueries.add(first[0]);
             }
             if(second[1] >= 4){
-                categoryKey = first[0] +" + "+second[0];
+                searchQueries.add(`${first[0]} + ${second[0]}`);
             }
-            if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
-                categoryKey = first[0] +" and "+second[0];
+            if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){ 
+                searchQueries.add(`${first[0]} and ${second[0]}`);
             }
         }else{
             if((first[1] >= 10) && ((first[1]-second[1]) >= 2)){
-                categoryKey = first[0];
+                searchQueries.add(first[0]);
             }
-            if(second[1] >= 4){
+            /* if(second[1] >= 4){
                 categoryKey = first[0] +" + "+second[0];
             }
             if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
                 categoryKey = first[0] +" + "+second[0];
+            } */
+            if (second[1] >= 4) {
+                if(sectionKey === "s2"){
+                    searchQueries.add(`${first[0]} + ${second[0]}`);
+                    searchQueries.add(`${second[0]} + ${first[0]}`);
+                }else{
+                    searchQueries.add(`${first[0]} + ${second[0]}`);
+                }
             }
         }
+
+        if (searchQueries.size === 0) searchQueries.add(first[0]);
+        const categoryKeyArray = Array.from(searchQueries);
 
         const resultText = await Result.findOne({
             assessmentId,
             sectionCustomId: sectionKey,
-            category: categoryKey
+            category: { $in: categoryKeyArray }
         });
 
         fullReport.push({
             section: sectionKey,
             topCategories: topTwo,
-            keyUsed: categoryKey,
-            content: resultText ? resultText : {title:categoryKey,content: "NOT FOUND"}
+            keyUsed: categoryKeyArray,
+            content: resultText ? resultText : {
+                title: categoryKey[0],
+                content: "NOT FOUND"
+            }
         });
     }
 
