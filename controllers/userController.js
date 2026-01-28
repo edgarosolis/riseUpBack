@@ -109,10 +109,11 @@ const updateUser = async(req, res)=>{
 }
 
 const deleteUser = async(req=request,res=response)=>{
+    
     const {id} = req.params;
 
-    //TODO or turn status to "FALSE"
-    const user = await User.findByIdAndDelete(id);
+    await User.findByIdAndDelete(id);
+    await Submission.deleteMany({ userId: id });
 
     return res.json({
         msg:"Ok"
