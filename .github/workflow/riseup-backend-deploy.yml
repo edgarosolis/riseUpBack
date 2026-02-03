@@ -1,0 +1,44 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  build-and-deploy:
+    name: 🎉 Deploy Backend
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - name: 📦 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Step 3: Rsync deployments
+      - name: 📂 rsync deployments
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude="node_modules/" --exclude=".env"
+          path: ./*
+          remote_path: /home/ubuntu/riseup-backend
+          remote_host: "${{ secrets.SSH_HOST }}"
+          remote_user: ubuntu
+          remote_key: "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      # Step 4: Execute deployment script on the remote server
+      - name: 🎉 Deploy to Remote Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: "${{ secrets.SSH_HOST }}"
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/riseup-backend
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh
