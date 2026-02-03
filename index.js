@@ -1,7 +1,7 @@
 require("dotenv").config();
 const cors = require("cors");
 const express = require("express");
-/* const fileUpload = require('express-fileupload'); */
+const fileUpload = require('express-fileupload');
 const { dbConnection } = require("./database/config");
 const routes = require("./routes/routes");
 const path = require('path');
@@ -34,12 +34,12 @@ app.use(
 //PARSE BODY
 app.use(express.json());
 
-/* //UPLOAD FILES
+//UPLOAD FILES
 app.use(fileUpload({
     useTempFiles:true,
     tempFileDir:"./tmp/",
     createParentPath: true
-})); */
+}));
 
 //PUBLIC DIRECTORY
 app.use(express.static("public"));

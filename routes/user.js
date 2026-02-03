@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { userIdExists } = require("../helpers/dbValidators");
-const { getUserById, createUser, updateUser, deleteUser, getAllUsers, getAllUsersNotAdmin } = require("../controllers/userController");
+const { getUserById, createUser, updateUser, deleteUser, getAllUsers, getAllUsersNotAdmin, createUsersFromCSV } = require("../controllers/userController");
 
 
 router.get('/',getAllUsers);
@@ -21,6 +21,8 @@ router.post('/',[
     check('password','Password is required').not().isEmpty(),
     validateFiedls
 ],createUser);
+
+router.post('/bulk-upload', createUsersFromCSV);
 
 router.put('/:id',[
     check('id','ID not valid').isMongoId(),
