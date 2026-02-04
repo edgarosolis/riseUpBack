@@ -125,7 +125,7 @@ const requestOTP = async (req, res) => {
 
         if (!user) {
             return res.status(400).json({
-                msg: 'No account found with this e-mail!'
+                msg: 'No account found with this email'
             });
         }
 
