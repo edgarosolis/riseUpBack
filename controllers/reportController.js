@@ -51,11 +51,12 @@ const getReportInfo = async(req,res) =>{
 const getFinalResults = async (countsBySection, assessmentId) => {
     const fullReport = [];
 
-    // Iteramos sobre cada sección (s1, s2, s3...)
+    let keysS2 = [];
+    let keysS3 = [];
+
     for (const sectionKey in countsBySection) {
         const categories = countsBySection[sectionKey];
-
-        // 1. Convertimos el objeto en un arreglo de [nombre, valor] y ordenamos de mayor a mayor
+        
         const sorted = Object.entries(categories).sort((a, b) => { 
             if (b[1] !== a[1]) { 
                 return b[1] - a[1];
@@ -64,7 +65,6 @@ const getFinalResults = async (countsBySection, assessmentId) => {
             }
         });
          
-        // 2. Tomamos los dos más altos
         const topTwo = sorted.slice(0, 2); 
         const [first,second] = topTwo;
         let searchQueries = new Set();
@@ -83,12 +83,6 @@ const getFinalResults = async (countsBySection, assessmentId) => {
             if((first[1] >= 10) && ((first[1]-second[1]) >= 2)){
                 searchQueries.add(first[0]);
             }
-            /* if(second[1] >= 4){
-                categoryKey = first[0] +" + "+second[0];
-            }
-            if((first[1] === second[1]) && first[1] >= 4 && second[1]>= 4){
-                categoryKey = first[0] +" + "+second[0];
-            } */
             if (second[1] >= 4) {
                 if(sectionKey === "s2"){
                     searchQueries.add(`${first[0]} + ${second[0]}`);
@@ -101,6 +95,9 @@ const getFinalResults = async (countsBySection, assessmentId) => {
 
         if (searchQueries.size === 0) searchQueries.add(first[0]);
         const categoryKeyArray = Array.from(searchQueries);
+         
+        if (sectionKey === "s2") keysS2 = categoryKeyArray;
+        if (sectionKey === "s3") keysS3 = categoryKeyArray;
 
         const resultText = await Result.findOne({
             assessmentId,
@@ -113,7 +110,31 @@ const getFinalResults = async (countsBySection, assessmentId) => {
             topCategories: topTwo,
             keyUsed: categoryKeyArray,
             content: resultText ? resultText : {
-                title: categoryKey[0],
+                title: categoryKeyArray,
+                content: "NOT FOUND"
+            }
+        });
+    }
+
+    const s4 = [];
+    keysS2.forEach(val2 => {
+        keysS3.forEach(val3 => {
+            s4.push(`${val2} + ${val3}`);
+        });
+    });
+
+    if (s4.length > 0) {        
+        const resultR1 = await Result.findOne({
+            assessmentId,
+            sectionCustomId: 'r1',
+            category: { $in: s4 }
+        });
+
+        fullReport.push({
+            section: 'r1',
+            keyUsed: s4[0],
+            content: resultR1 || {
+                title: s4[0],
                 content: "NOT FOUND"
             }
         });
