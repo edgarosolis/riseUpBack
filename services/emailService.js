@@ -1,6 +1,13 @@
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+const { Resend } = require('resend');
 
-// Initialize SES client
+// Email provider configuration: 'resend' or 'ses'
+const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'resend';
+
+// Initialize Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Initialize SES client (fallback)
 const sesClient = new SESClient({
     region: process.env.AWS_REGION || 'us-east-1',
     credentials: {
@@ -9,7 +16,7 @@ const sesClient = new SESClient({
     }
 });
 
-const SENDER_EMAIL = process.env.SES_SENDER_EMAIL || 'melissa@theriseupculture.com';
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'melissa@theriseupculture.com';
 
 /**
  * Send OTP email to user
@@ -49,36 +56,55 @@ const sendOTPEmail = async (email, code) => {
 
     const textBody = `Your Rise Up Culture verification code is: ${code}. This code will expire in 5 minutes.`;
 
-    const params = {
-        Source: SENDER_EMAIL,
-        Destination: {
-            ToAddresses: [email]
-        },
-        Message: {
-            Subject: {
-                Data: 'Your Rise Up Culture Login Code',
-                Charset: 'UTF-8'
-            },
-            Body: {
-                Html: {
-                    Data: htmlBody,
-                    Charset: 'UTF-8'
-                },
-                Text: {
-                    Data: textBody,
-                    Charset: 'UTF-8'
-                }
-            }
-        }
-    };
-
     try {
-        const command = new SendEmailCommand(params);
-        await sesClient.send(command);
-        console.log(`OTP email sent successfully to ${email}`);
-        return true;
+        if (EMAIL_PROVIDER === 'resend') {
+            // Send via Resend
+            const { data, error } = await resend.emails.send({
+                from: SENDER_EMAIL,
+                to: [email],
+                subject: 'Your Rise Up Culture Login Code',
+                html: htmlBody,
+                text: textBody
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            console.log(`OTP email sent successfully via Resend to ${email}`);
+            return true;
+        } else {
+            // Send via AWS SES (fallback)
+            const params = {
+                Source: SENDER_EMAIL,
+                Destination: {
+                    ToAddresses: [email]
+                },
+                Message: {
+                    Subject: {
+                        Data: 'Your Rise Up Culture Login Code',
+                        Charset: 'UTF-8'
+                    },
+                    Body: {
+                        Html: {
+                            Data: htmlBody,
+                            Charset: 'UTF-8'
+                        },
+                        Text: {
+                            Data: textBody,
+                            Charset: 'UTF-8'
+                        }
+                    }
+                }
+            };
+
+            const command = new SendEmailCommand(params);
+            await sesClient.send(command);
+            console.log(`OTP email sent successfully via SES to ${email}`);
+            return true;
+        }
     } catch (error) {
-        console.error('Error sending OTP email:', error);
+        console.error(`Error sending OTP email via ${EMAIL_PROVIDER}:`, error);
         throw error;
     }
 };
