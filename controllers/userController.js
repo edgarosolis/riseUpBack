@@ -30,6 +30,35 @@ const getAllUsersNotAdmin = async(req=request,res=response)=>{
 
 }
 
+const getAllAdmins = async(req=request,res=response)=>{
+    try {
+        const admins = await User.find({status:true, rol:"admin"});
+        return res.json(admins);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error})
+    }
+}
+
+const createAdmin = async(req,res=response)=>{
+    const { email,firstName,lastName } = req.body;
+    const userExists = await User.findOne({email});
+
+    if(userExists){
+        return res.status(400).json({
+            msg:"Email already exist."
+        });
+    }
+
+    const admin = new User({email,firstName,lastName,rol:"admin"});
+    await admin.save();
+
+    return res.json({
+        msg:"Admin created",
+        user: admin,
+    });
+}
+
 const getUserById = async(req=request,res=response)=>{
 
     const {id} = req.params;
@@ -233,8 +262,10 @@ const createUsersFromCSV = async(req=request, res=response) => {
 module.exports = {
     getAllUsers,
     getAllUsersNotAdmin,
+    getAllAdmins,
     getUserById,
     createUser,
+    createAdmin,
     updateUser,
     deleteUser,
     createUsersFromCSV
