@@ -42,5 +42,19 @@ jobs:
             cd /home/ubuntu/riseup-backend
             chmod +x ./scripts/deploy.sh
             ./scripts/deploy.sh
+            echo "Syncing frontend build..."
+            FRONTEND_DIR=$(pm2 describe riseup-frontend 2>/dev/null | grep "exec cwd" | awk '{print $NF}')
+            if [ -n "$FRONTEND_DIR" ] && [ -d "$FRONTEND_DIR" ]; then
+              echo "Frontend directory: $FRONTEND_DIR"
+              cp -r /home/ubuntu/riseup-backend/public/* "$FRONTEND_DIR/build/" 2>/dev/null || cp -r /home/ubuntu/riseup-backend/public/* "$FRONTEND_DIR/public/" 2>/dev/null || cp -r /home/ubuntu/riseup-backend/public/* "$FRONTEND_DIR/" 2>/dev/null || echo "Could not determine frontend static dir"
+            else
+              echo "Could not find frontend directory, checking common paths..."
+              for dir in /home/ubuntu/riseup-frontend /home/ubuntu/riseup-frontend/build /home/ubuntu/riseup-frontend/public; do
+                if [ -d "$dir" ]; then
+                  echo "Found: $dir"
+                  ls "$dir" | head -10
+                fi
+              done
+            fi
             echo "Restarting frontend..."
             pm2 restart riseup-frontend || true
