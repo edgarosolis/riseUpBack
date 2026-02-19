@@ -18,7 +18,6 @@ router.get('/:id',[
 
 router.post('/',[
     check('email','Email not valid').isEmail(),
-    check('password','Password is required').not().isEmpty(),
     validateFiedls
 ],createUser);
 

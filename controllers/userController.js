@@ -49,7 +49,7 @@ const getUserById = async(req=request,res=response)=>{
 
 const createUser = async(req,res=response)=>{
 
-    const { password,email,firstName,lastName } = req.body;
+    const { email,firstName,lastName } = req.body;
     const userExists = await User.findOne({email});
 
     if(userExists){
@@ -58,18 +58,7 @@ const createUser = async(req,res=response)=>{
         });
     }
 
-    const user = new User(req.body);
-    if(firstName){
-        user.firstName = firstName;
-    }
-
-    if(lastName){
-        user.lastName = lastName;
-    }
-    const salt = bcryptjs.genSaltSync();
-
-    user.password = bcryptjs.hashSync(password,salt);
-    user.rawPassword = password;
+    const user = new User({email,firstName,lastName,rol:"user"});
 
     const submission = new Submission({
         assessmentId: "69694fa65b16328a2cd50da7", // TODO CHANGE LOGIC WHEN MORE ASSESSMENT CREATED
@@ -147,16 +136,16 @@ const createUsersFromCSV = async(req=request, res=response) => {
         // Process each row
         for (const row of rows) {
             rowNumber++;
-            const { firstName, lastName, email, password } = row;
+            const { firstName, lastName, email } = row;
 
             // Validate required fields
-            if (!firstName || !lastName || !email || !password) {
+            if (!firstName || !lastName || !email) {
                 failedCount++;
                 results.push({
                     row: rowNumber,
                     email: email || 'N/A',
                     status: 'error',
-                    message: 'Missing required fields (firstName, lastName, email, password)'
+                    message: 'Missing required fields (firstName, lastName, email)'
                 });
                 continue;
             }
@@ -195,10 +184,6 @@ const createUsersFromCSV = async(req=request, res=response) => {
                     email,
                     rol: 'user'
                 });
-
-                const salt = bcryptjs.genSaltSync();
-                user.password = bcryptjs.hashSync(password, salt);
-                user.rawPassword = password;
 
                 // Create submission record
                 const submission = new Submission({
