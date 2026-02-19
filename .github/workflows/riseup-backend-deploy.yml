@@ -42,3 +42,5 @@ jobs:
             cd /home/ubuntu/riseup-backend
             chmod +x ./scripts/deploy.sh
             ./scripts/deploy.sh
+            echo "Restarting frontend..."
+            pm2 restart riseup-frontend || true
