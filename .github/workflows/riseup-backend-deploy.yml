@@ -42,3 +42,7 @@ jobs:
             cd /home/ubuntu/riseup-backend
             chmod +x ./scripts/deploy.sh
             ./scripts/deploy.sh
+            echo "Syncing frontend build..."
+            cp -r /home/ubuntu/riseup-backend/public/* /home/ubuntu/riseup-frontend/
+            echo "Restarting frontend..."
+            pm2 restart riseup-frontend || true

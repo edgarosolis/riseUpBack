@@ -30,6 +30,35 @@ const getAllUsersNotAdmin = async(req=request,res=response)=>{
 
 }
 
+const getAllAdmins = async(req=request,res=response)=>{
+    try {
+        const admins = await User.find({status:true, rol:"admin"});
+        return res.json(admins);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error})
+    }
+}
+
+const createAdmin = async(req,res=response)=>{
+    const { email,firstName,lastName } = req.body;
+    const userExists = await User.findOne({email});
+
+    if(userExists){
+        return res.status(400).json({
+            msg:"Email already exist."
+        });
+    }
+
+    const admin = new User({email,firstName,lastName,rol:"admin"});
+    await admin.save();
+
+    return res.json({
+        msg:"Admin created",
+        user: admin,
+    });
+}
+
 const getUserById = async(req=request,res=response)=>{
 
     const {id} = req.params;
@@ -49,7 +78,7 @@ const getUserById = async(req=request,res=response)=>{
 
 const createUser = async(req,res=response)=>{
 
-    const { password,email,firstName,lastName } = req.body;
+    const { email,firstName,lastName } = req.body;
     const userExists = await User.findOne({email});
 
     if(userExists){
@@ -58,18 +87,7 @@ const createUser = async(req,res=response)=>{
         });
     }
 
-    const user = new User(req.body);
-    if(firstName){
-        user.firstName = firstName;
-    }
-
-    if(lastName){
-        user.lastName = lastName;
-    }
-    const salt = bcryptjs.genSaltSync();
-
-    user.password = bcryptjs.hashSync(password,salt);
-    user.rawPassword = password;
+    const user = new User({email,firstName,lastName,rol:"user"});
 
     const submission = new Submission({
         assessmentId: "69694fa65b16328a2cd50da7", // TODO CHANGE LOGIC WHEN MORE ASSESSMENT CREATED
@@ -147,16 +165,16 @@ const createUsersFromCSV = async(req=request, res=response) => {
         // Process each row
         for (const row of rows) {
             rowNumber++;
-            const { firstName, lastName, email, password } = row;
+            const { firstName, lastName, email } = row;
 
             // Validate required fields
-            if (!firstName || !lastName || !email || !password) {
+            if (!firstName || !lastName || !email) {
                 failedCount++;
                 results.push({
                     row: rowNumber,
                     email: email || 'N/A',
                     status: 'error',
-                    message: 'Missing required fields (firstName, lastName, email, password)'
+                    message: 'Missing required fields (firstName, lastName, email)'
                 });
                 continue;
             }
@@ -195,10 +213,6 @@ const createUsersFromCSV = async(req=request, res=response) => {
                     email,
                     rol: 'user'
                 });
-
-                const salt = bcryptjs.genSaltSync();
-                user.password = bcryptjs.hashSync(password, salt);
-                user.rawPassword = password;
 
                 // Create submission record
                 const submission = new Submission({
@@ -248,8 +262,10 @@ const createUsersFromCSV = async(req=request, res=response) => {
 module.exports = {
     getAllUsers,
     getAllUsersNotAdmin,
+    getAllAdmins,
     getUserById,
     createUser,
+    createAdmin,
     updateUser,
     deleteUser,
     createUsersFromCSV
