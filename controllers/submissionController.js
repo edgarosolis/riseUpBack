@@ -90,6 +90,9 @@ const createSubmission = async(req,res=response)=>{
 const updateSubmission = async(req,res)=>{
     try {
         const {id} = req.params;
+        if (req.body.finished === true) {
+            req.body.completedAt = new Date();
+        }
         const updatedSubmission = await Submission.findByIdAndUpdate(id,{$set:req.body},{new:true});
         return res.json({submission:updatedSubmission,msg:"Saved correctly"});
     } catch (error) {

@@ -13,9 +13,12 @@ const SubmissionSchema = new Schema({
       required: true 
     },
     answers: [AnswerSchema],
-    finished: { 
-        type: Boolean, 
-        default: false 
+    finished: {
+        type: Boolean,
+        default: false
+    },
+    completedAt: {
+        type: Date
     },
     active: {
         type: Boolean,
