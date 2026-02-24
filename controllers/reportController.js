@@ -84,12 +84,8 @@ const getFinalResults = async (countsBySection, assessmentId) => {
                 searchQueries.add(first[0]);
             }
             if (second[1] >= 4) {
-                if(sectionKey === "s2"){
-                    searchQueries.add(`${first[0]} + ${second[0]}`);
-                    searchQueries.add(`${second[0]} + ${first[0]}`);
-                }else{
-                    searchQueries.add(`${first[0]} + ${second[0]}`);
-                }
+                searchQueries.add(`${first[0]} + ${second[0]}`);
+                searchQueries.add(`${second[0]} + ${first[0]}`);
             }
         }
 
