@@ -1,0 +1,52 @@
+name: Auto-merge PRs to testing
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [testing]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for mergeability check
+        run: sleep 15
+
+      - name: Auto-merge PR to testing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const prTitle = context.payload.pull_request.title;
+
+            let attempts = 0;
+            let pr;
+            while (attempts < 5) {
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              pr = data;
+              if (pr.mergeable !== null) break;
+              await new Promise(r => setTimeout(r, 5000));
+              attempts++;
+            }
+
+            if (pr.mergeable === false) {
+              core.setFailed(`PR #${prNumber} has merge conflicts. Please resolve them before merging.`);
+              return;
+            }
+
+            try {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'merge',
+                commit_title: `Merge PR #${prNumber}: ${prTitle}`,
+              });
+              console.log(`Successfully auto-merged PR #${prNumber} to testing`);
+            } catch (error) {
+              core.setFailed(`Auto-merge failed: ${error.message}`);
+            }

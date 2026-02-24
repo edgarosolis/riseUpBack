@@ -1,0 +1,40 @@
+name: Deploy Backend (Testing)
+
+on:
+  push:
+    branches: [testing]
+
+jobs:
+  build-and-deploy:
+    name: Deploy Testing Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy to testing server via rsync
+        uses: burnett01/rsync-deployments@7.0.1
+        with:
+          switches: -avzr --delete --exclude="node_modules/" --exclude=".env" --exclude="scripts/"
+          path: ./*
+          remote_path: /home/ubuntu/riseup-backend-testing
+          remote_host: "${{ secrets.SSH_HOST }}"
+          remote_user: ubuntu
+          remote_key: "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Run deploy script on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: "${{ secrets.SSH_HOST }}"
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/riseup-backend-testing
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh
+            echo "Testing backend deployed at $(date)"
