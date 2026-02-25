@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const Group360 = require("../models/group360");
 const Submission360 = require("../models/submission360");
 const Assessment = require("../models/assessment");
+const Result = require("../models/result");
 const User = require("../models/user");
 const Group = require("../models/group");
 
@@ -312,6 +313,186 @@ const completeReview = async(req, res)=>{
     }
 }
 
+// ─── Report endpoints ───
+
+const toggleReport360 = async(req, res)=>{
+    const {group360Id} = req.params;
+    try {
+        const group360 = await Group360.findById(group360Id);
+        if(!group360) return res.status(404).json({msg:"Group360 not found"});
+
+        group360.reportReady = !group360.reportReady;
+        await group360.save();
+
+        const populated = await group360.populate(['reviewee', 'reviewers.user']);
+        return res.json({
+            msg:'Ok',
+            group360: populated,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error});
+    }
+}
+
+const getFinalResults360 = async (countsBySection, assessmentId) => {
+    const fullReport = [];
+
+    let keysS2 = [];
+    let keysS3 = [];
+
+    for (const sectionKey in countsBySection) {
+        const categories = countsBySection[sectionKey];
+
+        const sorted = Object.entries(categories).sort((a, b) => {
+            if (b[1] !== a[1]) {
+                return b[1] - a[1];
+            } else {
+                return a[0].localeCompare(b[0]);
+            }
+        });
+
+        const topTwo = sorted.slice(0, 2);
+        const [first, second] = topTwo;
+        let searchQueries = new Set();
+
+        if(sectionKey === "s1"){
+            if((first[1] >= 9) && ((first[1]-second[1]) >= 2)){
+                searchQueries.add(first[0]);
+            }
+            if(second[1] >= 4){
+                searchQueries.add(`${first[0]} + ${second[0]}`);
+            }
+            if((first[1] === second[1]) && first[1] >= 4 && second[1] >= 4){
+                searchQueries.add(`${first[0]} and ${second[0]}`);
+            }
+        }else{
+            if((first[1] >= 10) && ((first[1]-second[1]) >= 2)){
+                searchQueries.add(first[0]);
+            }
+            if (second[1] >= 4) {
+                searchQueries.add(`${first[0]} + ${second[0]}`);
+                searchQueries.add(`${second[0]} + ${first[0]}`);
+            }
+        }
+
+        if (searchQueries.size === 0) searchQueries.add(first[0]);
+        const categoryKeyArray = Array.from(searchQueries);
+
+        if (sectionKey === "s2") keysS2 = categoryKeyArray;
+        if (sectionKey === "s3") keysS3 = categoryKeyArray;
+
+        const resultText = await Result.findOne({
+            assessmentId,
+            sectionCustomId: sectionKey,
+            category: { $in: categoryKeyArray }
+        });
+
+        fullReport.push({
+            section: sectionKey,
+            topCategories: topTwo,
+            keyUsed: categoryKeyArray,
+            content: resultText ? resultText : {
+                title: categoryKeyArray,
+                content: "NOT FOUND"
+            }
+        });
+    }
+
+    const s4 = [];
+    keysS2.forEach(val2 => {
+        keysS3.forEach(val3 => {
+            s4.push(`${val2} + ${val3}`);
+        });
+    });
+
+    if (s4.length > 0) {
+        const resultR1 = await Result.findOne({
+            assessmentId,
+            sectionCustomId: 'r1',
+            category: { $in: s4 }
+        });
+
+        fullReport.push({
+            section: 'r1',
+            keyUsed: s4[0],
+            content: resultR1 || {
+                title: s4[0],
+                content: "NOT FOUND"
+            }
+        });
+    }
+
+    return fullReport;
+};
+
+const getReport360Info = async(req, res)=>{
+    const {group360Id} = req.params;
+    try {
+        const group360 = await Group360.findById(group360Id).populate('assessmentId');
+        if(!group360) return res.status(404).json({msg:"Group360 not found"});
+
+        const assessment = group360.assessmentId;
+        if(!assessment) return res.status(404).json({msg:"Assessment not found"});
+
+        // Find ALL finished Submission360s for this reviewee in this group
+        const finishedSubmissions = await Submission360.find({
+            revieweeId: group360.reviewee,
+            groupId: group360.group,
+            finished: true,
+            active: true,
+        });
+
+        if(finishedSubmissions.length === 0){
+            return res.status(400).json({msg:"No completed submissions found"});
+        }
+
+        const totalSubmissions = finishedSubmissions.length;
+
+        // For each submission, compute category counts per section (same as reportController)
+        // Then average across all submissions
+        const averagedCounts = {};
+
+        finishedSubmissions.forEach(submission => {
+            assessment.sections.forEach(section => {
+                const sectionId = section.customId || section._id.toString();
+                if(!averagedCounts[sectionId]) averagedCounts[sectionId] = {};
+
+                section.questions.forEach(question => {
+                    const userChoice = submission.answers.find(a => a.customId === question.customId);
+
+                    if(userChoice){
+                        const selectedOption = question.options.find(opt => opt.text === userChoice.value);
+
+                        if(selectedOption && selectedOption.category){
+                            const cat = selectedOption.category;
+                            averagedCounts[sectionId][cat] = (averagedCounts[sectionId][cat] || 0) + 1;
+                        }
+                    }
+                });
+            });
+        });
+
+        // Average: divide each count by totalSubmissions
+        for(const sectionId in averagedCounts){
+            for(const cat in averagedCounts[sectionId]){
+                averagedCounts[sectionId][cat] = averagedCounts[sectionId][cat] / totalSubmissions;
+            }
+        }
+
+        const reportInfo = await getFinalResults360(averagedCounts, assessment._id);
+
+        return res.json({
+            msg:'Ok',
+            report: reportInfo,
+            submissionCount: totalSubmissions,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error});
+    }
+}
+
 module.exports = {
     getGroup360sByGroupId,
     getGroup360ById,
@@ -323,4 +504,6 @@ module.exports = {
     getReviewByToken,
     saveReviewProgress,
     completeReview,
+    toggleReport360,
+    getReport360Info,
 }

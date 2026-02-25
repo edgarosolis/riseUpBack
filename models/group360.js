@@ -46,6 +46,10 @@ const Group360Schema = new Schema({
         type: Boolean,
         default: true
     },
+    reportReady: {
+        type: Boolean,
+        default: false
+    },
 }, { timestamps: true });
 
 Group360Schema.index({ group: 1 });
