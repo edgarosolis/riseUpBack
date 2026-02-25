@@ -5,9 +5,13 @@ const QuestionSchema = Schema({
         type: String, 
         required: true 
     },
-    text: { 
-        type: String, 
-        required: true 
+    text: {
+        type: String,
+        required: true
+    },
+    reviewerText: {
+        type: String,
+        default: ""
     },
     type: { 
         type: String, 

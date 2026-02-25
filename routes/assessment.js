@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { assessmentIdExists } = require("../helpers/dbValidators");
-const { getAllAssessments, getAssessmentById, createAssessment, updateAssessment, deleteAssessment } = require("../controllers/assessmentController");
+const { getAllAssessments, getAssessmentById, createAssessment, updateAssessment, deleteAssessment, updateQuestionReviewerText } = require("../controllers/assessmentController");
 
 
 router.get('/',getAllAssessments);
@@ -21,6 +21,12 @@ router.put('/:id',[
     check('id').custom(assessmentIdExists),
     validateFiedls
 ],updateAssessment);
+
+router.put('/:id/reviewer-text',[
+    check('id','ID not valid').isMongoId(),
+    check('id').custom(assessmentIdExists),
+    validateFiedls
+],updateQuestionReviewerText);
 
 router.delete('/:id',[
     check('id','ID not valid').isMongoId(),

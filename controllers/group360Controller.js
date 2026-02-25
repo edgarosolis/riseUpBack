@@ -209,32 +209,20 @@ const getReviewByToken = async(req, res)=>{
             await submission.save();
         }
 
-        // Personalize questions: replace {name} or pronouns with reviewee's first name
+        // Personalize questions for reviewer context
         const assessment = group360.assessmentId.toObject();
         const revieweeName = group360.reviewee.firstName;
-
-        const personalizeText = (text) => {
-            // If the text has {name} placeholders, use those
-            if(text.includes('{name}')){
-                return text.replace(/\{name\}/g, revieweeName);
-            }
-            // Otherwise, transform pronouns for the reviewer context
-            let t = text;
-            t = t.replace(/\byourself\b/gi, revieweeName);
-            t = t.replace(/\bYour\b/g, `${revieweeName}'s`);
-            t = t.replace(/\byour\b/g, `${revieweeName}'s`);
-            t = t.replace(/\bYou\b/g, revieweeName);
-            t = t.replace(/\byou\b/g, revieweeName);
-            return t;
-        };
 
         if(assessment.sections){
             assessment.sections = assessment.sections.map(section => {
                 if(section.questions){
-                    section.questions = section.questions.map(q => ({
-                        ...q,
-                        text: personalizeText(q.text)
-                    }));
+                    section.questions = section.questions.map(q => {
+                        // Use reviewerText if available, otherwise fall back to original text
+                        const displayText = q.reviewerText
+                            ? q.reviewerText.replace(/\{name\}/g, revieweeName)
+                            : q.text;
+                        return { ...q, text: displayText };
+                    });
                 }
                 return section;
             });

@@ -64,10 +64,38 @@ const deleteAssessment = async(req=request,res=response)=>{
     })
 }
 
+const updateQuestionReviewerText = async(req, res)=>{
+    const { id } = req.params; // assessment ID
+    const { customId, reviewerText } = req.body;
+    try {
+        const assessment = await Assessment.findById(id);
+        if(!assessment) return res.status(404).json({msg:"Assessment not found"});
+
+        let found = false;
+        for(const section of assessment.sections){
+            const question = section.questions.find(q => q.customId === customId);
+            if(question){
+                question.reviewerText = reviewerText || "";
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) return res.status(404).json({msg:"Question not found"});
+
+        await assessment.save();
+        return res.json({msg:"Reviewer text updated", assessment});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error", error});
+    }
+}
+
 module.exports = {
     getAllAssessments,
     getAssessmentById,
     createAssessment,
     updateAssessment,
     deleteAssessment,
+    updateQuestionReviewerText,
 }
