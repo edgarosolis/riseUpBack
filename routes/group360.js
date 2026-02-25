@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { group360IdExists, groupIdExists, userIdExists } = require("../helpers/dbValidators");
-const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview } = require("../controllers/group360Controller");
+const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview, toggleReport360, getReport360Info } = require("../controllers/group360Controller");
 
 // ─── Admin routes ───
 
@@ -44,6 +44,20 @@ router.put('/removeReviewer/:group360Id/:reviewerId',[
     check('group360Id').custom(group360IdExists),
     validateFiedls
 ], removeReviewer);
+
+// ─── Report routes ───
+
+router.put('/toggleReport/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], toggleReport360);
+
+router.get('/report360/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], getReport360Info);
 
 // ─── Public routes (no auth, token-based) ───
 
