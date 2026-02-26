@@ -52,5 +52,5 @@ app.use("/{*splat}", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log("SERVER RUNNING ON PORT", PORT);
+  console.log(`SERVER RUNNING ON PORT ${PORT} — ${new Date().toISOString()}`);
 });
