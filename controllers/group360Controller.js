@@ -355,21 +355,23 @@ const getFinalResults360 = async (countsBySection, assessmentId) => {
         const [first, second] = topTwo;
         let searchQueries = new Set();
 
+        if (!first) continue;
+
         if(sectionKey === "s1"){
-            if((first[1] >= 9) && ((first[1]-second[1]) >= 2)){
+            if(second && (first[1] >= 9) && ((first[1]-second[1]) >= 2)){
                 searchQueries.add(first[0]);
             }
-            if(second[1] >= 4){
+            if(second && second[1] >= 4){
                 searchQueries.add(`${first[0]} + ${second[0]}`);
             }
-            if((first[1] === second[1]) && first[1] >= 4 && second[1] >= 4){
+            if(second && (first[1] === second[1]) && first[1] >= 4 && second[1] >= 4){
                 searchQueries.add(`${first[0]} and ${second[0]}`);
             }
         }else{
-            if((first[1] >= 10) && ((first[1]-second[1]) >= 2)){
+            if(second && (first[1] >= 10) && ((first[1]-second[1]) >= 2)){
                 searchQueries.add(first[0]);
             }
-            if (second[1] >= 4) {
+            if (second && second[1] >= 4) {
                 searchQueries.add(`${first[0]} + ${second[0]}`);
                 searchQueries.add(`${second[0]} + ${first[0]}`);
             }
