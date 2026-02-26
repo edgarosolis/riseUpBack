@@ -762,6 +762,14 @@ const generateReport360 = async(req, res)=>{
         const group360 = await Group360.findById(group360Id);
         if(!group360) return res.status(404).json({msg:"Group360 not found"});
 
+        // Check that reviewee has completed their personal assessment
+        const personalSubmission = await Submission.findOne({
+            assessmentId: group360.assessmentId,
+            userId: group360.reviewee,
+            finished: true,
+            active: true,
+        });
+
         // Count completed reviewer submissions (exclude self-assessments)
         const completedCount = await Submission360.countDocuments({
             revieweeId: group360.reviewee,
@@ -771,10 +779,14 @@ const generateReport360 = async(req, res)=>{
             reviewerId: { $ne: group360.reviewee }
         });
 
-        if(completedCount < 3){
+        if(!personalSubmission || completedCount < 3){
+            const reasons = [];
+            if(!personalSubmission) reasons.push("your personal assessment is not yet completed");
+            if(completedCount < 3) reasons.push(`at least 3 reviewer submissions are required (currently ${completedCount})`);
             return res.status(400).json({
-                msg:`At least 3 completed reviewer submissions required. Currently: ${completedCount}`,
+                msg:`Unable to generate report: ${reasons.join(", and ")}.`,
                 completedCount,
+                personalAssessmentComplete: !!personalSubmission,
             });
         }
 
