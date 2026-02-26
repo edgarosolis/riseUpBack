@@ -15,6 +15,12 @@ const ReviewerSchema = new Schema({
         type: String,
         enum: ['pending', 'in_progress', 'completed'],
         default: 'pending'
+    },
+    invitedAt: {
+        type: Date
+    },
+    lastRemindedAt: {
+        type: Date
     }
 });
 

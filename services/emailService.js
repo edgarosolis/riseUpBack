@@ -109,6 +109,160 @@ const sendOTPEmail = async (email, code) => {
     }
 };
 
+/**
+ * Send 360 review invitation email
+ * @param {string} email - Recipient email address
+ * @param {string} reviewerName - Reviewer's first name
+ * @param {string} revieweeName - Reviewee's first name
+ * @param {string} reviewUrl - Full URL to begin the review
+ * @returns {Promise<boolean>} - Success status
+ */
+const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
+    const htmlBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center;">
+                <h1 style="color: #333; margin-bottom: 20px;">Rise Up Culture</h1>
+                <p style="color: #666; font-size: 16px; margin-bottom: 10px;">
+                    Hi ${reviewerName},
+                </p>
+                <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                    You've been invited to complete a 360 review for <strong>${revieweeName}</strong>.
+                    Your honest feedback will help them grow as a leader.
+                </p>
+                <a href="${reviewUrl}" style="display: inline-block; background-color: #F4C542; color: #000; font-weight: bold; font-size: 18px; padding: 14px 40px; border-radius: 8px; text-decoration: none;">
+                    Start Review
+                </a>
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                    If the button doesn't work, copy and paste this link into your browser:<br>
+                    <a href="${reviewUrl}" style="color: #007bff;">${reviewUrl}</a>
+                </p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const textBody = `Hi ${reviewerName}, you've been invited to complete a 360 review for ${revieweeName}. Start your review here: ${reviewUrl}`;
+
+    try {
+        if (EMAIL_PROVIDER === 'resend') {
+            const { data, error } = await resend.emails.send({
+                from: SENDER_EMAIL,
+                to: [email],
+                subject: `360 Review Invitation - ${revieweeName}`,
+                html: htmlBody,
+                text: textBody
+            });
+
+            if (error) throw new Error(error.message);
+            console.log(`Invitation email sent via Resend to ${email}`);
+            return true;
+        } else {
+            const params = {
+                Source: SENDER_EMAIL,
+                Destination: { ToAddresses: [email] },
+                Message: {
+                    Subject: { Data: `360 Review Invitation - ${revieweeName}`, Charset: 'UTF-8' },
+                    Body: {
+                        Html: { Data: htmlBody, Charset: 'UTF-8' },
+                        Text: { Data: textBody, Charset: 'UTF-8' }
+                    }
+                }
+            };
+            const command = new SendEmailCommand(params);
+            await sesClient.send(command);
+            console.log(`Invitation email sent via SES to ${email}`);
+            return true;
+        }
+    } catch (error) {
+        console.error(`Error sending invitation email via ${EMAIL_PROVIDER}:`, error);
+        throw error;
+    }
+};
+
+/**
+ * Send 360 review reminder email
+ * @param {string} email - Recipient email address
+ * @param {string} reviewerName - Reviewer's first name
+ * @param {string} revieweeName - Reviewee's first name
+ * @param {string} reviewUrl - Full URL to begin the review
+ * @returns {Promise<boolean>} - Success status
+ */
+const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
+    const htmlBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center;">
+                <h1 style="color: #333; margin-bottom: 20px;">Rise Up Culture</h1>
+                <p style="color: #666; font-size: 16px; margin-bottom: 10px;">
+                    Hi ${reviewerName},
+                </p>
+                <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                    This is a friendly reminder to complete your 360 review for <strong>${revieweeName}</strong>.
+                    Your feedback is important and helps shape their growth journey.
+                </p>
+                <a href="${reviewUrl}" style="display: inline-block; background-color: #F4C542; color: #000; font-weight: bold; font-size: 18px; padding: 14px 40px; border-radius: 8px; text-decoration: none;">
+                    Complete Review
+                </a>
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                    If the button doesn't work, copy and paste this link into your browser:<br>
+                    <a href="${reviewUrl}" style="color: #007bff;">${reviewUrl}</a>
+                </p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    const textBody = `Hi ${reviewerName}, this is a reminder to complete your 360 review for ${revieweeName}. Complete your review here: ${reviewUrl}`;
+
+    try {
+        if (EMAIL_PROVIDER === 'resend') {
+            const { data, error } = await resend.emails.send({
+                from: SENDER_EMAIL,
+                to: [email],
+                subject: `Reminder: 360 Review for ${revieweeName}`,
+                html: htmlBody,
+                text: textBody
+            });
+
+            if (error) throw new Error(error.message);
+            console.log(`Reminder email sent via Resend to ${email}`);
+            return true;
+        } else {
+            const params = {
+                Source: SENDER_EMAIL,
+                Destination: { ToAddresses: [email] },
+                Message: {
+                    Subject: { Data: `Reminder: 360 Review for ${revieweeName}`, Charset: 'UTF-8' },
+                    Body: {
+                        Html: { Data: htmlBody, Charset: 'UTF-8' },
+                        Text: { Data: textBody, Charset: 'UTF-8' }
+                    }
+                }
+            };
+            const command = new SendEmailCommand(params);
+            await sesClient.send(command);
+            console.log(`Reminder email sent via SES to ${email}`);
+            return true;
+        }
+    } catch (error) {
+        console.error(`Error sending reminder email via ${EMAIL_PROVIDER}:`, error);
+        throw error;
+    }
+};
+
 module.exports = {
-    sendOTPEmail
+    sendOTPEmail,
+    sendInvitationEmail,
+    sendReminderEmail
 };

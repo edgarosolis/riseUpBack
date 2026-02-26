@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { group360IdExists, groupIdExists, userIdExists } = require("../helpers/dbValidators");
-const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview, toggleReport360, getReport360Info } = require("../controllers/group360Controller");
+const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview, toggleReport360, getReport360Info, addReviewerByEmail, updateReviewer, inviteReviewer, inviteAllReviewers, remindReviewer, remindAllReviewers, generateReport360 } = require("../controllers/group360Controller");
 
 // ─── Admin routes ───
 
@@ -45,6 +45,44 @@ router.put('/removeReviewer/:group360Id/:reviewerId',[
     validateFiedls
 ], removeReviewer);
 
+// ─── User-facing Setup360 routes ───
+
+router.post('/addReviewerByEmail/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], addReviewerByEmail);
+
+router.put('/updateReviewer/:group360Id/:reviewerId',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], updateReviewer);
+
+router.post('/invite/:group360Id/:reviewerId',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], inviteReviewer);
+
+router.post('/inviteAll/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], inviteAllReviewers);
+
+router.post('/remind/:group360Id/:reviewerId',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], remindReviewer);
+
+router.post('/remindAll/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], remindAllReviewers);
+
 // ─── Report routes ───
 
 router.put('/toggleReport/:group360Id',[
@@ -52,6 +90,12 @@ router.put('/toggleReport/:group360Id',[
     check('group360Id').custom(group360IdExists),
     validateFiedls
 ], toggleReport360);
+
+router.put('/generateReport/:group360Id',[
+    check('group360Id','ID not valid').isMongoId(),
+    check('group360Id').custom(group360IdExists),
+    validateFiedls
+], generateReport360);
 
 router.get('/report360/:group360Id',[
     check('group360Id','ID not valid').isMongoId(),
