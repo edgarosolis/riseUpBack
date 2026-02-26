@@ -497,8 +497,8 @@ const getReport360Info = async(req, res)=>{
             reviewerReport = await getFinalResults360(reviewerCounts, assessment._id);
         }
 
-        // Backward compat: "report" uses reviewer data if available, else self
-        const report = reviewerReport || selfReport;
+        // Main report is always the personal assessment
+        const report = selfReport;
 
         return res.json({
             msg:'Ok',
