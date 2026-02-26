@@ -11,6 +11,13 @@ const fs = require('fs');
 
 // Helper: provision Group + Group360 for a user
 const provision360 = async (userId, firstName) => {
+    // If a Group360 already exists for this user, return it instead of creating a duplicate
+    const existing = await Group360.findOne({ reviewee: userId });
+    if (existing) {
+        const existingGroup = await Group.findById(existing.group);
+        return { group: existingGroup, group360: existing };
+    }
+
     const assessment = await Assessment.findOne({ active: true });
     if (!assessment) throw new Error("No active assessment found");
 
@@ -29,13 +36,13 @@ const provision360 = async (userId, firstName) => {
     return { group, group360 };
 };
 
-// Helper: deprovision Group + Group360 for a user
+// Helper: deprovision ALL Group360s for a user
 const deprovision360 = async (userId) => {
-    const group360 = await Group360.findOne({ reviewee: userId });
-    if (group360) {
-        await Submission360.deleteMany({ groupId: group360.group });
-        await Group360.findByIdAndDelete(group360._id);
-        await Group.findByIdAndDelete(group360.group);
+    const group360s = await Group360.find({ reviewee: userId });
+    for (const g360 of group360s) {
+        await Submission360.deleteMany({ groupId: g360.group });
+        await Group360.findByIdAndDelete(g360._id);
+        await Group.findByIdAndDelete(g360.group);
     }
 };
 
