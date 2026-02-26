@@ -28,6 +28,10 @@ const UserSchema = Schema({
     status:{
         type:Boolean,
         default: true
+    },
+    has360:{
+        type:Boolean,
+        default: false
     }
 },{timestamps:true});
 

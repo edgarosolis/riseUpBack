@@ -9,7 +9,6 @@ const GroupSchema = new Schema({
     church: {
         type: Schema.Types.ObjectId,
         ref: 'Church',
-        required: [true, 'Church is required.']
     },
     members: [{
         type: Schema.Types.ObjectId,

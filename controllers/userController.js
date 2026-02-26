@@ -2,8 +2,42 @@ const { response,request } = require("express");
 const User = require('../models/user');
 const bcryptjs = require('bcryptjs');
 const Submission = require("../models/submission");
+const Assessment = require("../models/assessment");
+const Group = require("../models/group");
+const Group360 = require("../models/group360");
+const Submission360 = require("../models/submission360");
 const csv = require('csv-parser');
 const fs = require('fs');
+
+// Helper: provision Group + Group360 for a user
+const provision360 = async (userId, firstName) => {
+    const assessment = await Assessment.findOne({ active: true });
+    if (!assessment) throw new Error("No active assessment found");
+
+    const group = await Group.create({
+        name: `${firstName}'s Team`,
+        members: [userId],
+        assessmentId: assessment._id,
+    });
+
+    const group360 = await Group360.create({
+        assessmentId: assessment._id,
+        reviewee: userId,
+        group: group._id,
+    });
+
+    return { group, group360 };
+};
+
+// Helper: deprovision Group + Group360 for a user
+const deprovision360 = async (userId) => {
+    const group360 = await Group360.findOne({ reviewee: userId });
+    if (group360) {
+        await Submission360.deleteMany({ groupId: group360.group });
+        await Group360.findByIdAndDelete(group360._id);
+        await Group.findByIdAndDelete(group360.group);
+    }
+};
 
 
 const getAllUsers = async(req=request,res=response)=>{
@@ -78,7 +112,7 @@ const getUserById = async(req=request,res=response)=>{
 
 const createUser = async(req,res=response)=>{
 
-    const { email,firstName,lastName } = req.body;
+    const { email,firstName,lastName, has360 } = req.body;
     const userExists = await User.findOne({email});
 
     if(userExists){
@@ -87,7 +121,7 @@ const createUser = async(req,res=response)=>{
         });
     }
 
-    const user = new User({email,firstName,lastName,rol:"user"});
+    const user = new User({email,firstName,lastName,rol:"user", has360: has360 || false});
 
     const submission = new Submission({
         assessmentId: "69694fa65b16328a2cd50da7", // TODO CHANGE LOGIC WHEN MORE ASSESSMENT CREATED
@@ -96,6 +130,14 @@ const createUser = async(req,res=response)=>{
 
     await user.save();
     await submission.save();
+
+    if (has360) {
+        try {
+            await provision360(user._id, firstName);
+        } catch (err) {
+            console.log("360 provisioning error on createUser:", err.message);
+        }
+    }
 
     return res.json({
         msg:"User created",
@@ -162,10 +204,13 @@ const createUsersFromCSV = async(req=request, res=response) => {
                 .on('error', reject);
         });
 
+        const globalHas360 = req.body.has360 === 'true' || req.body.has360 === true;
+
         // Process each row
         for (const row of rows) {
             rowNumber++;
             const { firstName, lastName, email } = row;
+            const rowHas360 = row.has360 === 'true' || row.has360 === true || globalHas360;
 
             // Validate required fields
             if (!firstName || !lastName || !email) {
@@ -211,7 +256,8 @@ const createUsersFromCSV = async(req=request, res=response) => {
                     firstName,
                     lastName,
                     email,
-                    rol: 'user'
+                    rol: 'user',
+                    has360: rowHas360,
                 });
 
                 // Create submission record
@@ -222,6 +268,14 @@ const createUsersFromCSV = async(req=request, res=response) => {
 
                 await user.save();
                 await submission.save();
+
+                if (rowHas360) {
+                    try {
+                        await provision360(user._id, firstName);
+                    } catch (err) {
+                        console.log(`360 provisioning error for ${email}:`, err.message);
+                    }
+                }
 
                 successCount++;
                 results.push({
@@ -259,6 +313,51 @@ const createUsersFromCSV = async(req=request, res=response) => {
     }
 }
 
+const toggle360 = async(req=request, res=response) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ msg: "User not found" });
+
+        if (!user.has360) {
+            // Turn ON
+            user.has360 = true;
+            await user.save();
+
+            const { group360 } = await provision360(user._id, user.firstName);
+            const populated = await Group360.findById(group360._id)
+                .populate('reviewee', 'firstName lastName email')
+                .populate('reviewers.user', 'firstName lastName email');
+
+            return res.json({ user, group360: populated });
+        } else {
+            // Turn OFF
+            user.has360 = false;
+            await user.save();
+
+            await deprovision360(user._id);
+
+            return res.json({ user });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Server error", error: error.message });
+    }
+}
+
+const getUserGroup360 = async(req=request, res=response) => {
+    const { id } = req.params;
+    try {
+        const group360 = await Group360.findOne({ reviewee: id })
+            .populate('reviewers.user', 'firstName lastName email');
+
+        return res.json({ group360: group360 || null });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Server error", error: error.message });
+    }
+}
+
 module.exports = {
     getAllUsers,
     getAllUsersNotAdmin,
@@ -268,5 +367,7 @@ module.exports = {
     createAdmin,
     updateUser,
     deleteUser,
-    createUsersFromCSV
+    createUsersFromCSV,
+    toggle360,
+    getUserGroup360,
 }

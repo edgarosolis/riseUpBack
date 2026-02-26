@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { userIdExists } = require("../helpers/dbValidators");
-const { getUserById, createUser, createAdmin, updateUser, deleteUser, getAllUsers, getAllUsersNotAdmin, getAllAdmins, createUsersFromCSV } = require("../controllers/userController");
+const { getUserById, createUser, createAdmin, updateUser, deleteUser, getAllUsers, getAllUsersNotAdmin, getAllAdmins, createUsersFromCSV, toggle360, getUserGroup360 } = require("../controllers/userController");
 
 
 router.get('/',getAllUsers);
@@ -29,6 +29,18 @@ router.post('/',[
 ],createUser);
 
 router.post('/bulk-upload', createUsersFromCSV);
+
+router.put('/:id/toggle360',[
+    check('id','ID not valid').isMongoId(),
+    check('id').custom(userIdExists),
+    validateFiedls
+],toggle360);
+
+router.get('/:id/group360',[
+    check('id','ID not valid').isMongoId(),
+    check('id').custom(userIdExists),
+    validateFiedls
+],getUserGroup360);
 
 router.put('/:id',[
     check('id','ID not valid').isMongoId(),
