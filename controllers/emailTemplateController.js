@@ -40,7 +40,9 @@ const updateEmailTemplate = async(req,res)=>{
 
         // Update content fields and regenerate HTML
         if (content) {
-            template.content = { ...template.content.toObject?.() || template.content, ...content };
+            const existing = template.content.toObject ? template.content.toObject() : { ...template.content };
+            template.content = { ...existing, ...content };
+            template.markModified('content');
             template.htmlBody = buildEmailHtml(template.slug, template.content);
             template.textBody = buildTextBody(template.slug, template.content);
         }
@@ -50,8 +52,8 @@ const updateEmailTemplate = async(req,res)=>{
 
         return res.json({template, msg:"Saved correctly"});
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({msg:"Server error",error});
+        console.log("updateEmailTemplate error:", error);
+        return res.status(500).json({msg: error.message || "Server error"});
     }
 }
 
