@@ -40,9 +40,8 @@ const EmailTemplateSchema = Schema({
     }
 });
 
-EmailTemplateSchema.pre('save', function(next) {
+EmailTemplateSchema.pre('save', function() {
     this.updatedAt = Date.now();
-    next();
 });
 
 module.exports = model('EmailTemplate', EmailTemplateSchema);
