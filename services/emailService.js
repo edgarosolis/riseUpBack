@@ -1,5 +1,6 @@
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const { Resend } = require('resend');
+const EmailTemplate = require('../models/emailTemplate');
 
 // Email provider configuration: 'resend' or 'ses'
 const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'resend';
@@ -19,13 +20,71 @@ const sesClient = new SESClient({
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'melissa@theriseupculture.com';
 
 /**
+ * Replace {{variable}} placeholders with actual values
+ */
+const interpolate = (template, variables) => {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+        return variables[key] !== undefined ? variables[key] : match;
+    });
+};
+
+/**
+ * Generic email sender that handles both Resend and SES
+ */
+const sendEmail = async (email, subject, htmlBody, textBody) => {
+    if (EMAIL_PROVIDER === 'resend') {
+        const { data, error } = await resend.emails.send({
+            from: SENDER_EMAIL,
+            to: [email],
+            subject,
+            html: htmlBody,
+            text: textBody
+        });
+        if (error) throw new Error(error.message);
+        return true;
+    } else {
+        const params = {
+            Source: SENDER_EMAIL,
+            Destination: { ToAddresses: [email] },
+            Message: {
+                Subject: { Data: subject, Charset: 'UTF-8' },
+                Body: {
+                    Html: { Data: htmlBody, Charset: 'UTF-8' },
+                    Text: { Data: textBody, Charset: 'UTF-8' }
+                }
+            }
+        };
+        const command = new SendEmailCommand(params);
+        await sesClient.send(command);
+        return true;
+    }
+};
+
+/**
  * Send OTP email to user
  * @param {string} email - Recipient email address
  * @param {string} code - 6-digit OTP code
  * @returns {Promise<boolean>} - Success status
  */
 const sendOTPEmail = async (email, code) => {
-    const htmlBody = `
+    let subject, htmlBody, textBody;
+    const vars = { code };
+
+    try {
+        const template = await EmailTemplate.findOne({ slug: 'otp-login' });
+        if (template) {
+            subject = interpolate(template.subject, vars);
+            htmlBody = interpolate(template.htmlBody, vars);
+            textBody = interpolate(template.textBody, vars);
+        }
+    } catch (e) {
+        console.log('Failed to load email template from DB, using fallback:', e);
+    }
+
+    // Fallback to hardcoded if DB lookup failed
+    if (!htmlBody) {
+        subject = 'Your Rise Up Culture Login Code';
+        htmlBody = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -52,57 +111,14 @@ const sendOTPEmail = async (email, code) => {
             </div>
         </body>
         </html>
-    `;
-
-    const textBody = `Your Rise Up Culture verification code is: ${code}. This code will expire in 5 minutes.`;
+        `;
+        textBody = `Your Rise Up Culture verification code is: ${code}. This code will expire in 5 minutes.`;
+    }
 
     try {
-        if (EMAIL_PROVIDER === 'resend') {
-            // Send via Resend
-            const { data, error } = await resend.emails.send({
-                from: SENDER_EMAIL,
-                to: [email],
-                subject: 'Your Rise Up Culture Login Code',
-                html: htmlBody,
-                text: textBody
-            });
-
-            if (error) {
-                throw new Error(error.message);
-            }
-
-            console.log(`OTP email sent successfully via Resend to ${email}`);
-            return true;
-        } else {
-            // Send via AWS SES (fallback)
-            const params = {
-                Source: SENDER_EMAIL,
-                Destination: {
-                    ToAddresses: [email]
-                },
-                Message: {
-                    Subject: {
-                        Data: 'Your Rise Up Culture Login Code',
-                        Charset: 'UTF-8'
-                    },
-                    Body: {
-                        Html: {
-                            Data: htmlBody,
-                            Charset: 'UTF-8'
-                        },
-                        Text: {
-                            Data: textBody,
-                            Charset: 'UTF-8'
-                        }
-                    }
-                }
-            };
-
-            const command = new SendEmailCommand(params);
-            await sesClient.send(command);
-            console.log(`OTP email sent successfully via SES to ${email}`);
-            return true;
-        }
+        await sendEmail(email, subject, htmlBody, textBody);
+        console.log(`OTP email sent successfully via ${EMAIL_PROVIDER} to ${email}`);
+        return true;
     } catch (error) {
         console.error(`Error sending OTP email via ${EMAIL_PROVIDER}:`, error);
         throw error;
@@ -118,7 +134,24 @@ const sendOTPEmail = async (email, code) => {
  * @returns {Promise<boolean>} - Success status
  */
 const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
-    const htmlBody = `
+    let subject, htmlBody, textBody;
+    const vars = { reviewerName, revieweeName, reviewUrl };
+
+    try {
+        const template = await EmailTemplate.findOne({ slug: '360-invitation' });
+        if (template) {
+            subject = interpolate(template.subject, vars);
+            htmlBody = interpolate(template.htmlBody, vars);
+            textBody = interpolate(template.textBody, vars);
+        }
+    } catch (e) {
+        console.log('Failed to load email template from DB, using fallback:', e);
+    }
+
+    // Fallback to hardcoded
+    if (!htmlBody) {
+        subject = `360 Review Invitation - ${revieweeName}`;
+        htmlBody = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -145,40 +178,14 @@ const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl)
             </div>
         </body>
         </html>
-    `;
-
-    const textBody = `Hi ${reviewerName}, you've been invited to complete a 360 review for ${revieweeName}. Start your review here: ${reviewUrl}`;
+        `;
+        textBody = `Hi ${reviewerName}, you've been invited to complete a 360 review for ${revieweeName}. Start your review here: ${reviewUrl}`;
+    }
 
     try {
-        if (EMAIL_PROVIDER === 'resend') {
-            const { data, error } = await resend.emails.send({
-                from: SENDER_EMAIL,
-                to: [email],
-                subject: `360 Review Invitation - ${revieweeName}`,
-                html: htmlBody,
-                text: textBody
-            });
-
-            if (error) throw new Error(error.message);
-            console.log(`Invitation email sent via Resend to ${email}`);
-            return true;
-        } else {
-            const params = {
-                Source: SENDER_EMAIL,
-                Destination: { ToAddresses: [email] },
-                Message: {
-                    Subject: { Data: `360 Review Invitation - ${revieweeName}`, Charset: 'UTF-8' },
-                    Body: {
-                        Html: { Data: htmlBody, Charset: 'UTF-8' },
-                        Text: { Data: textBody, Charset: 'UTF-8' }
-                    }
-                }
-            };
-            const command = new SendEmailCommand(params);
-            await sesClient.send(command);
-            console.log(`Invitation email sent via SES to ${email}`);
-            return true;
-        }
+        await sendEmail(email, subject, htmlBody, textBody);
+        console.log(`Invitation email sent via ${EMAIL_PROVIDER} to ${email}`);
+        return true;
     } catch (error) {
         console.error(`Error sending invitation email via ${EMAIL_PROVIDER}:`, error);
         throw error;
@@ -194,7 +201,24 @@ const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl)
  * @returns {Promise<boolean>} - Success status
  */
 const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
-    const htmlBody = `
+    let subject, htmlBody, textBody;
+    const vars = { reviewerName, revieweeName, reviewUrl };
+
+    try {
+        const template = await EmailTemplate.findOne({ slug: '360-reminder' });
+        if (template) {
+            subject = interpolate(template.subject, vars);
+            htmlBody = interpolate(template.htmlBody, vars);
+            textBody = interpolate(template.textBody, vars);
+        }
+    } catch (e) {
+        console.log('Failed to load email template from DB, using fallback:', e);
+    }
+
+    // Fallback to hardcoded
+    if (!htmlBody) {
+        subject = `Reminder: 360 Review for ${revieweeName}`;
+        htmlBody = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -221,40 +245,14 @@ const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) =
             </div>
         </body>
         </html>
-    `;
-
-    const textBody = `Hi ${reviewerName}, this is a reminder to complete your 360 review for ${revieweeName}. Complete your review here: ${reviewUrl}`;
+        `;
+        textBody = `Hi ${reviewerName}, this is a reminder to complete your 360 review for ${revieweeName}. Complete your review here: ${reviewUrl}`;
+    }
 
     try {
-        if (EMAIL_PROVIDER === 'resend') {
-            const { data, error } = await resend.emails.send({
-                from: SENDER_EMAIL,
-                to: [email],
-                subject: `Reminder: 360 Review for ${revieweeName}`,
-                html: htmlBody,
-                text: textBody
-            });
-
-            if (error) throw new Error(error.message);
-            console.log(`Reminder email sent via Resend to ${email}`);
-            return true;
-        } else {
-            const params = {
-                Source: SENDER_EMAIL,
-                Destination: { ToAddresses: [email] },
-                Message: {
-                    Subject: { Data: `Reminder: 360 Review for ${revieweeName}`, Charset: 'UTF-8' },
-                    Body: {
-                        Html: { Data: htmlBody, Charset: 'UTF-8' },
-                        Text: { Data: textBody, Charset: 'UTF-8' }
-                    }
-                }
-            };
-            const command = new SendEmailCommand(params);
-            await sesClient.send(command);
-            console.log(`Reminder email sent via SES to ${email}`);
-            return true;
-        }
+        await sendEmail(email, subject, htmlBody, textBody);
+        console.log(`Reminder email sent via ${EMAIL_PROVIDER} to ${email}`);
+        return true;
     } catch (error) {
         console.error(`Error sending reminder email via ${EMAIL_PROVIDER}:`, error);
         throw error;

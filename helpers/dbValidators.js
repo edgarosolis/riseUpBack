@@ -6,6 +6,7 @@ const Result = require('../models/result');
 const Submission = require('../models/submission');
 const Submission360 = require('../models/submission360');
 const User = require('../models/user');
+const EmailTemplate = require('../models/emailTemplate');
 
 const assessmentIdExists = async(id)=>{
     const isIdValid = await Assessment.findById(id);
@@ -70,6 +71,14 @@ const submission360IdExists = async(id)=>{
     }
 }
 
+const emailTemplateIdExists = async(id)=>{
+    const isIdValid = await EmailTemplate.findById(id);
+
+    if(!isIdValid){
+        throw new Error('Id not valid');
+    }
+}
+
 module.exports = {
     assessmentIdExists,
     churchIdExists,
@@ -79,4 +88,5 @@ module.exports = {
     submissionIdExists,
     submission360IdExists,
     userIdExists,
+    emailTemplateIdExists,
 }
