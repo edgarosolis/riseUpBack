@@ -15,6 +15,14 @@ const EmailTemplateSchema = Schema({
         type: String,
         required: true
     },
+    content: {
+        heading: { type: String, default: 'Rise Up Culture' },
+        greeting: { type: String, default: '' },
+        bodyText: { type: String, required: true },
+        buttonText: { type: String, default: '' },
+        expiryText: { type: String, default: '' },
+        footerText: { type: String, default: '' }
+    },
     htmlBody: {
         type: String,
         required: true
