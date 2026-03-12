@@ -13,7 +13,7 @@ const loginController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email,rol:"user"});
+        const user = await User.findOne({email: email.toLowerCase(),rol:"user"});
 
         if(!user){
             return res.status(400).json({
@@ -63,7 +63,7 @@ const loginAdminController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email,rol:"admin"});
+        const user = await User.findOne({email: email.toLowerCase(),rol:"admin"});
 
         if(!user){
             return res.status(400).json({
@@ -121,7 +121,7 @@ const requestOTP = async (req, res) => {
         }
 
         // Check if user exists and is a regular user (not admin)
-        const user = await User.findOne({ email, rol: 'user' });
+        const user = await User.findOne({ email: email.toLowerCase(), rol: 'user' });
 
         if (!user) {
             return res.status(400).json({
@@ -138,7 +138,7 @@ const requestOTP = async (req, res) => {
         // Check rate limiting - max 3 OTP requests per 15 minutes
         const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
         const recentOTPs = await OTP.countDocuments({
-            email,
+            email: email.toLowerCase(),
             createdAt: { $gte: fifteenMinutesAgo }
         });
 
@@ -159,11 +159,11 @@ const requestOTP = async (req, res) => {
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         // Delete any existing OTPs for this email
-        await OTP.deleteMany({ email });
+        await OTP.deleteMany({ email: email.toLowerCase() });
 
         // Save new OTP
         const otp = new OTP({
-            email,
+            email: email.toLowerCase(),
             code: hashedCode,
             expiresAt
         });
@@ -198,7 +198,7 @@ const verifyOTP = async (req, res) => {
         }
 
         // Find the OTP record
-        const otpRecord = await OTP.findOne({ email });
+        const otpRecord = await OTP.findOne({ email: email.toLowerCase() });
 
         if (!otpRecord) {
             return res.status(400).json({
@@ -242,7 +242,7 @@ const verifyOTP = async (req, res) => {
         await OTP.deleteOne({ _id: otpRecord._id });
 
         // Get user data
-        const user = await User.findOne({ email, rol: 'user' });
+        const user = await User.findOne({ email: email.toLowerCase(), rol: 'user' });
 
         if (!user || !user.status) {
             return res.status(400).json({
