@@ -13,7 +13,7 @@ const loginController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email: email.toLowerCase(),rol:"user"});
+        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, rol:"user"});
 
         if(!user){
             return res.status(400).json({
@@ -63,7 +63,7 @@ const loginAdminController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email: email.toLowerCase(),rol:"admin"});
+        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, rol:"admin"});
 
         if(!user){
             return res.status(400).json({
@@ -120,8 +120,8 @@ const requestOTP = async (req, res) => {
             });
         }
 
-        // Check if user exists
-        const user = await User.findOne({ email: email.toLowerCase() });
+        // Check if user exists (case-insensitive match for legacy data)
+        const user = await User.findOne({ email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
         if (!user) {
             return res.status(400).json({
@@ -241,8 +241,8 @@ const verifyOTP = async (req, res) => {
         // OTP is valid - delete it
         await OTP.deleteOne({ _id: otpRecord._id });
 
-        // Get user data
-        const user = await User.findOne({ email: email.toLowerCase(), rol: 'user' });
+        // Get user data (case-insensitive match for legacy data)
+        const user = await User.findOne({ email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
         if (!user || !user.status) {
             return res.status(400).json({
