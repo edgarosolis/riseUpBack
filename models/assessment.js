@@ -13,6 +13,7 @@ const SectionSchema = Schema({
     image:String,
     color:String,
     description: String,
+    reviewerDescription: String,
     questions: [QuestionSchema],
     report:{
         intro: String,

@@ -211,6 +211,10 @@ const getReviewByToken = async(req, res)=>{
 
         if(assessment.sections){
             assessment.sections = assessment.sections.map(section => {
+                // Use reviewerDescription if available, replacing {name} with reviewee name
+                if(section.reviewerDescription){
+                    section.description = section.reviewerDescription.replace(/\{name\}/g, revieweeName);
+                }
                 if(section.questions){
                     section.questions = section.questions.map(q => {
                         // Use reviewerText if available, otherwise fall back to original text
