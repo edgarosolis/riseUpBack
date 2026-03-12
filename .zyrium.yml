@@ -1,0 +1,18 @@
+# Zyrium project configuration
+# Auto-generated — do not edit manually
+
+project: RiseUp
+repository: riseUpBack
+deploy_branch: main
+deploy_method: ec2-ssh
+testing_branch: testing
+testing_url: https://testing.theriseupculture.com
+
+workflow:
+  owner: push directly to main
+  zadok: feature branch (zadok/{task-id}) -> PR -> review -> merge
+
+rules:
+  - Never push directly to main (except owner)
+  - Always create a PR for code changes
+  - Branch naming: zadok/{task-id}-{description}
