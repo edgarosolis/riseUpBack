@@ -120,8 +120,8 @@ const requestOTP = async (req, res) => {
             });
         }
 
-        // Check if user exists and is a regular user (not admin)
-        const user = await User.findOne({ email: email.toLowerCase(), rol: 'user' });
+        // Check if user exists
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return res.status(400).json({
