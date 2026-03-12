@@ -260,6 +260,7 @@ const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) =
 };
 
 module.exports = {
+    sendEmail,
     sendOTPEmail,
     sendInvitationEmail,
     sendReminderEmail

@@ -3,7 +3,7 @@ const router = express.Router();
 const { check } = require("express-validator");
 const { validateFiedls } = require("../middlewares/validateFields");
 
-const { loginController, loginAdminController, requestOTP, verifyOTP } = require("../controllers/authController");
+const { loginController, loginAdminController, requestOTP, verifyOTP, resetAdminPassword } = require("../controllers/authController");
 
 router.post('/login',[
     check('email','Email not valid').isEmail(),
@@ -29,5 +29,10 @@ router.post('/verify-otp',[
     check('code','Verification code must be 6 digits').isLength({ min: 6, max: 6 }),
     validateFiedls
 ], verifyOTP);
+
+router.post('/reset-admin-password',[
+    check('email','Email not valid').isEmail(),
+    validateFiedls
+], resetAdminPassword);
 
 module.exports = router;

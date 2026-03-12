@@ -1,7 +1,8 @@
+const crypto = require('crypto');
 const bcrytpjs = require('bcryptjs');
 const User = require('../models/user');
 const OTP = require('../models/otp');
-const { sendOTPEmail } = require('../services/emailService');
+const { sendOTPEmail, sendEmail } = require('../services/emailService');
 
 // Generate 6-digit OTP code
 const generateOTPCode = () => {
@@ -274,9 +275,72 @@ const verifyOTP = async (req, res) => {
     }
 };
 
+const resetAdminPassword = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({
+            email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+            rol: "admin"
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                msg: 'If an admin account exists with this email, a new password has been sent.'
+            });
+        }
+
+        const rawPassword = crypto.randomUUID().slice(0, 8);
+        const salt = bcrytpjs.genSaltSync();
+        const hashedPassword = bcrytpjs.hashSync(rawPassword, salt);
+
+        user.password = hashedPassword;
+        user.rawPassword = rawPassword;
+        await user.save();
+
+        await sendEmail(
+            email,
+            'Rise Up Culture — Password Reset',
+            `<!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center;">
+                    <h1 style="color: #333; margin-bottom: 20px;">Rise Up Culture</h1>
+                    <p style="color: #666; font-size: 16px;">Hi ${user.firstName},</p>
+                    <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                        Your admin password has been reset. Here is your new password:
+                    </p>
+                    <div style="background-color: #fff; border: 2px solid #007bff; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #007bff;">
+                            ${rawPassword}
+                        </span>
+                    </div>
+                    <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                        If you didn't request this reset, please contact your administrator immediately.
+                    </p>
+                </div>
+            </body>
+            </html>`,
+            `Hi ${user.firstName}, your Rise Up Culture admin password has been reset. New password: ${rawPassword}`
+        );
+
+        return res.status(200).json({
+            msg: 'If an admin account exists with this email, a new password has been sent.'
+        });
+
+    } catch (error) {
+        console.error('Error resetting admin password:', error);
+        return res.status(500).json({
+            msg: 'Failed to reset password. Please try again.'
+        });
+    }
+};
+
 module.exports = {
     loginController,
     loginAdminController,
     requestOTP,
-    verifyOTP
+    verifyOTP,
+    resetAdminPassword
 }

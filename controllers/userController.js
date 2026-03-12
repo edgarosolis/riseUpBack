@@ -1,4 +1,5 @@
 const { response,request } = require("express");
+const crypto = require('crypto');
 const User = require('../models/user');
 const bcryptjs = require('bcryptjs');
 const Submission = require("../models/submission");
@@ -8,6 +9,7 @@ const Group360 = require("../models/group360");
 const Submission360 = require("../models/submission360");
 const csv = require('csv-parser');
 const fs = require('fs');
+const { sendEmail } = require('../services/emailService');
 
 // Helper: provision Group + Group360 for a user
 const provision360 = async (userId, firstName) => {
@@ -91,8 +93,42 @@ const createAdmin = async(req,res=response)=>{
         });
     }
 
-    const admin = new User({email,firstName,lastName,rol:"admin"});
+    const rawPassword = crypto.randomUUID().slice(0, 8);
+    const salt = bcryptjs.genSaltSync();
+    const password = bcryptjs.hashSync(rawPassword, salt);
+
+    const admin = new User({email,firstName,lastName,rol:"admin", password, rawPassword});
     await admin.save();
+
+    try {
+        await sendEmail(
+            email,
+            'Your Rise Up Culture Admin Account',
+            `<!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center;">
+                    <h1 style="color: #333; margin-bottom: 20px;">Rise Up Culture</h1>
+                    <p style="color: #666; font-size: 16px;">Hi ${firstName},</p>
+                    <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                        Your admin account has been created. Here are your login credentials:
+                    </p>
+                    <div style="background-color: #fff; border: 2px solid #007bff; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+                        <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+                        <p style="margin: 5px 0;"><strong>Password:</strong> ${rawPassword}</p>
+                    </div>
+                    <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                        Please keep your credentials safe. You can reset your password from the admin login page.
+                    </p>
+                </div>
+            </body>
+            </html>`,
+            `Hi ${firstName}, your Rise Up Culture admin account has been created. Email: ${email} Password: ${rawPassword}`
+        );
+    } catch (err) {
+        console.log('Failed to send admin welcome email:', err.message);
+    }
 
     return res.json({
         msg:"Admin created",
