@@ -46,3 +46,6 @@ jobs:
             cp -r /home/ubuntu/riseup-backend/public/* /home/ubuntu/riseup-frontend/
             echo "Restarting frontend..."
             pm2 restart riseup-frontend || true
+            echo "Running reviewer descriptions seed..."
+            source /home/ubuntu/.nvm/nvm.sh
+            node scripts/seedReviewerDescriptions.js
