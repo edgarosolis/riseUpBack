@@ -126,14 +126,21 @@ const createAdmin = async(req,res=response)=>{
             </html>`,
             `Hi ${firstName}, your Rise Up Culture admin account has been created. Email: ${email} Password: ${rawPassword}`
         );
+        return res.json({
+            msg:"Admin created and welcome email sent",
+            user: admin,
+            tempPassword: rawPassword,
+            emailSent: true,
+        });
     } catch (err) {
         console.log('Failed to send admin welcome email:', err.message);
+        return res.json({
+            msg:"Admin created but welcome email could not be sent. Please share the login credentials manually.",
+            user: admin,
+            tempPassword: rawPassword,
+            emailSent: false,
+        });
     }
-
-    return res.json({
-        msg:"Admin created",
-        user: admin,
-    });
 }
 
 const getUserById = async(req=request,res=response)=>{

@@ -91,6 +91,46 @@ const updateQuestionReviewerText = async(req, res)=>{
     }
 }
 
+const updateQuestion = async(req, res)=>{
+    const { id } = req.params; // assessment ID
+    const { customId, text, reviewerText, options } = req.body;
+    try {
+        const assessment = await Assessment.findById(id);
+        if(!assessment) return res.status(404).json({msg:"Assessment not found"});
+
+        let found = false;
+        for(const section of assessment.sections){
+            const question = section.questions.find(q => q.customId === customId);
+            if(question){
+                if(text !== undefined) question.text = text;
+                if(reviewerText !== undefined) question.reviewerText = reviewerText;
+                if(options !== undefined && Array.isArray(options)){
+                    // Update option texts while preserving categories
+                    for(const optUpdate of options){
+                        const existingOpt = question.options.find((o, i) =>
+                            optUpdate.index !== undefined ? i === optUpdate.index : o.text === optUpdate.originalText
+                        );
+                        if(existingOpt){
+                            if(optUpdate.text !== undefined) existingOpt.text = optUpdate.text;
+                            if(optUpdate.category !== undefined) existingOpt.category = optUpdate.category;
+                        }
+                    }
+                }
+                found = true;
+                break;
+            }
+        }
+
+        if(!found) return res.status(404).json({msg:"Question not found"});
+
+        await assessment.save();
+        return res.json({msg:"Question updated", assessment});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error", error});
+    }
+}
+
 module.exports = {
     getAllAssessments,
     getAssessmentById,
@@ -98,4 +138,5 @@ module.exports = {
     updateAssessment,
     deleteAssessment,
     updateQuestionReviewerText,
+    updateQuestion,
 }

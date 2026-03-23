@@ -14,25 +14,26 @@ const loginController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, rol:"user"});
+        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim()}$`, 'i') }, rol:"user"});
 
         if(!user){
             return res.status(400).json({
-                msg:'User/Password not valid - User'
+                msg:'Invalid email or password. Please check your credentials and try again.'
             });
         }
 
         if(!user.status){
             return res.status(400).json({
-                msg:'User/Password not valid - Status'
+                msg:'This account has been disabled. Please contact an administrator.'
             });
         }
 
-        const validPassword = bcrytpjs.compareSync(password,user.password);
+        const trimmedPassword = password ? password.trim() : password;
+        const validPassword = bcrytpjs.compareSync(trimmedPassword,user.password);
 
         if(!validPassword){
             return res.status(400).json({
-                msg:'User/Password not valid-Password'
+                msg:'Invalid email or password. Please check your credentials and try again.'
             });
         }
 
@@ -64,25 +65,26 @@ const loginAdminController = async(req,res) =>{
     const {email, password} = req.body;
 
     try {
-        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, rol:"admin"});
+        const user = await User.findOne({email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim()}$`, 'i') }, rol:"admin"});
 
         if(!user){
             return res.status(400).json({
-                msg:'User/Password not valid - User'
+                msg:'Invalid email or password. Please check your credentials and try again.'
             });
         }
 
         if(!user.status){
             return res.status(400).json({
-                msg:'User/Password not valid - Status'
+                msg:'This account has been disabled. Please contact an administrator.'
             });
         }
 
-        const validPassword = bcrytpjs.compareSync(password,user.password);
+        const trimmedPassword = password ? password.trim() : password;
+        const validPassword = bcrytpjs.compareSync(trimmedPassword, user.password);
 
         if(!validPassword){
             return res.status(400).json({
-                msg:'User/Password not valid-Password'
+                msg:'Invalid email or password. If you recently reset your password, make sure to copy it exactly from the email without extra spaces.'
             });
         }
 

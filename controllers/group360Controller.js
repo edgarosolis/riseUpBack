@@ -147,6 +147,12 @@ const removeReviewer = async(req, res)=>{
         group360.reviewers = group360.reviewers.filter(
             r => r.user.toString() !== reviewerId
         );
+
+        // Reset report status since reviewer list changed
+        if(group360.reportReady){
+            group360.reportReady = false;
+        }
+
         await group360.save();
 
         // Delete reviewer's Submission360
@@ -509,6 +515,7 @@ const getReport360Info = async(req, res)=>{
             selfReport,
             reviewerReport,
             reviewerCount,
+            totalInvited: group360.reviewers.length,
             report,
             submissionCount: reviewerCount,
         });
@@ -579,9 +586,25 @@ const addReviewerByEmail = async(req, res)=>{
         });
         await submission.save();
 
+        // Auto-send invitation email
+        const addedReviewer = group360.reviewers.find(r => r.reviewToken === reviewToken);
+        try {
+            const reviewUrl = `${FRONT_URL}review/${reviewToken}`;
+            await sendInvitationEmail(
+                user.email,
+                user.firstName,
+                group360.reviewee.firstName,
+                reviewUrl
+            );
+            if(addedReviewer) addedReviewer.invitedAt = new Date();
+            await group360.save();
+        } catch(emailErr) {
+            console.log(`Auto-invitation email failed for ${user.email}:`, emailErr);
+        }
+
         const populated = await group360.populate(['reviewee', 'reviewers.user']);
         return res.json({
-            msg:"Reviewer added",
+            msg:"Reviewer added and invitation sent",
             group360: populated,
         });
     } catch (error) {
