@@ -29,6 +29,15 @@ const buildEmailHtml = (slug, content) => {
         </div>
         ${expiryText ? `<p style="color: #999; font-size: 14px; margin-top: 30px;">${expiryText}</p>` : ''}
         ${footerText ? `<p style="color: #999; font-size: 12px; margin-top: 20px;">${footerText}</p>` : ''}`;
+    } else if (slug === 'admin-welcome') {
+        contentHtml = `
+        ${greeting ? `<p style="color: #666; font-size: 16px; margin-bottom: 10px;">${greeting}</p>` : ''}
+        ${bodyParagraphs}
+        <div style="background-color: #fff; border: 2px solid #007bff; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+            <p style="margin: 5px 0;"><strong>Email:</strong> {{email}}</p>
+            <p style="margin: 5px 0;"><strong>Password:</strong> {{password}}</p>
+        </div>
+        ${footerText ? `<p style="color: #999; font-size: 12px; margin-top: 20px;">${footerText}</p>` : ''}`;
     } else {
         // 360 invitation & reminder templates
         contentHtml = `
@@ -72,6 +81,9 @@ const buildTextBody = (slug, content) => {
     if (slug === 'otp-login') {
         parts.push('{{code}}');
         if (expiryText) parts.push(expiryText);
+    } else if (slug === 'admin-welcome') {
+        parts.push('Email: {{email}}');
+        parts.push('Password: {{password}}');
     } else {
         parts.push('{{reviewUrl}}');
     }

@@ -5,7 +5,7 @@ const EmailTemplateSchema = Schema({
         type: String,
         required: true,
         unique: true,
-        enum: ['otp-login', '360-invitation', '360-reminder']
+        enum: ['otp-login', '360-invitation', '360-reminder', 'admin-welcome']
     },
     name: {
         type: String,

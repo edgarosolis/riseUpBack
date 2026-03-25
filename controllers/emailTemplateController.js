@@ -57,8 +57,26 @@ const updateEmailTemplate = async(req,res)=>{
     }
 }
 
+const seedEmailTemplate = async(req,res)=>{
+    try {
+        const { slug, name, subject, content, variables } = req.body;
+        const exists = await EmailTemplate.findOne({ slug });
+        if (exists) return res.json({ msg: "Already exists", template: exists });
+
+        const htmlBody = buildEmailHtml(slug, content);
+        const textBody = buildTextBody(slug, content);
+        const template = new EmailTemplate({ slug, name, subject, content, htmlBody, textBody, variables });
+        await template.save();
+        return res.json({ msg: "Created", template });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ msg: "Server error", error });
+    }
+}
+
 module.exports = {
     getAllEmailTemplates,
     getEmailTemplateById,
     updateEmailTemplate,
+    seedEmailTemplate,
 }
