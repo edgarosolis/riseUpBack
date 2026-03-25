@@ -834,10 +834,28 @@ const generateReport360 = async(req, res)=>{
     }
 }
 
+const getAllGroup360sWithReports = async(req, res)=>{
+    try {
+        const group360s = await Group360.find({ reportReady: true })
+            .populate('reviewee', 'firstName lastName email')
+            .populate('group', 'name')
+            .populate('reviewers.user', 'firstName lastName email')
+            .sort({ updatedAt: -1 });
+        return res.json({
+            msg:'Ok',
+            group360s,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error",error})
+    }
+}
+
 module.exports = {
     getGroup360sByGroupId,
     getGroup360ById,
     getGroup360sByUserId,
+    getAllGroup360sWithReports,
     createGroup360,
     deleteGroup360,
     addReviewer,

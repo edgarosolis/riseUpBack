@@ -3,9 +3,11 @@ const router = express.Router();
 const { check } = require('express-validator');
 const { validateFiedls } = require("../middlewares/validateFields");
 const { group360IdExists, groupIdExists, userIdExists } = require("../helpers/dbValidators");
-const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview, toggleReport360, getReport360Info, addReviewerByEmail, updateReviewer, inviteReviewer, inviteAllReviewers, remindReviewer, remindAllReviewers, generateReport360 } = require("../controllers/group360Controller");
+const { getGroup360sByGroupId, getGroup360ById, getGroup360sByUserId, getAllGroup360sWithReports, createGroup360, deleteGroup360, addReviewer, removeReviewer, getReviewByToken, saveReviewProgress, completeReview, toggleReport360, getReport360Info, addReviewerByEmail, updateReviewer, inviteReviewer, inviteAllReviewers, remindReviewer, remindAllReviewers, generateReport360 } = require("../controllers/group360Controller");
 
 // ─── Admin routes ───
+
+router.get('/withReports', getAllGroup360sWithReports);
 
 router.get('/group/:groupId',[
     check('groupId','ID not valid').isMongoId(),
