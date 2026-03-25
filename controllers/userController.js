@@ -86,11 +86,11 @@ const getAllAdmins = async(req=request,res=response)=>{
 
 const createAdmin = async(req,res=response)=>{
     const { email,firstName,lastName } = req.body;
-    const adminExists = await User.findOne({email, rol: "admin"});
+    const existingUser = await User.findOne({email});
 
-    if(adminExists){
+    if(existingUser && existingUser.rol === "admin"){
         return res.status(400).json({
-            msg:"Email already exist."
+            msg:"An admin with this email already exists."
         });
     }
 
@@ -98,8 +98,20 @@ const createAdmin = async(req,res=response)=>{
     const salt = bcryptjs.genSaltSync();
     const password = bcryptjs.hashSync(rawPassword, salt);
 
-    const admin = new User({email,firstName,lastName,rol:"admin", password, rawPassword});
-    await admin.save();
+    let admin;
+    if(existingUser){
+        // Promote existing user to admin
+        existingUser.rol = "admin";
+        existingUser.password = password;
+        existingUser.rawPassword = rawPassword;
+        if(firstName) existingUser.firstName = firstName;
+        if(lastName) existingUser.lastName = lastName;
+        await existingUser.save();
+        admin = existingUser;
+    } else {
+        admin = new User({email,firstName,lastName,rol:"admin", password, rawPassword});
+        await admin.save();
+    }
 
     try {
         const template = await EmailTemplate.findOne({ slug: 'admin-welcome' });
