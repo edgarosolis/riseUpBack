@@ -85,9 +85,9 @@ const getAllAdmins = async(req=request,res=response)=>{
 
 const createAdmin = async(req,res=response)=>{
     const { email,firstName,lastName } = req.body;
-    const userExists = await User.findOne({email});
+    const adminExists = await User.findOne({email, rol: "admin"});
 
-    if(userExists){
+    if(adminExists){
         return res.status(400).json({
             msg:"Email already exist."
         });
