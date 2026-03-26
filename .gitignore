@@ -1,4 +1,4 @@
 /node_modules
 /uploads
 .env
-/tmp
+/tmppublic/assets/videos/*.mov
