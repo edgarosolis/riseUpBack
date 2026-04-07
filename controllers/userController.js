@@ -233,6 +233,14 @@ const deleteUser = async(req=request,res=response)=>{
     await User.findByIdAndDelete(id);
     await Submission.deleteMany({ userId: id });
 
+    // Clean up 360 references so we don't leave orphaned reviewer subdocs
+    // (orphans cause empty cards on the user side and count mismatches with admin).
+    await Group360.updateMany(
+        { 'reviewers.user': id },
+        { $pull: { reviewers: { user: id } }, $set: { reportReady: false } }
+    );
+    await Submission360.deleteMany({ $or: [{ reviewerId: id }, { revieweeId: id }] });
+
     return res.json({
         msg:"Ok"
     })

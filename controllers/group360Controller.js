@@ -36,6 +36,10 @@ const getGroup360ById = async(req, res)=>{
             .populate('reviewee')
             .populate('reviewers.user')
             .populate('group');
+        if (group360) {
+            // Drop orphaned reviewer subdocs (User deleted) so they don't pollute counts/UI
+            group360.reviewers = group360.reviewers.filter(r => r.user);
+        }
         return res.json({
             msg:'Ok',
             group360,
@@ -52,6 +56,10 @@ const getGroup360sByUserId = async(req, res)=>{
         const group360s = await Group360.find({ reviewee: userId, active: true })
             .populate('group')
             .populate('reviewers.user');
+        // Drop orphaned reviewer subdocs (User deleted) so they don't pollute counts/UI
+        group360s.forEach(g => {
+            g.reviewers = g.reviewers.filter(r => r.user);
+        });
         return res.json({
             msg:'Ok',
             group360s,
