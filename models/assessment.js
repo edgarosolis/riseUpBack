@@ -26,18 +26,33 @@ const SectionSchema = Schema({
     }
 });
 
+const WelcomeIntroBulletSchema = new Schema({
+    bold: String,
+    text: String
+}, { _id: false });
+
+const WelcomeIntroSchema = new Schema({
+    headings: { type: [String], default: [] },
+    intro: { type: String, default: "" },
+    bulletsLead: { type: String, default: "" },
+    bullets: { type: [WelcomeIntroBulletSchema], default: [] },
+    closingParagraphs: { type: [String], default: [] },
+    callToAction: { type: String, default: "" }
+}, { _id: false });
+
 const AssessmentSchema = new Schema({
     title: {
-        type: String, 
-        required: true 
+        type: String,
+        required: true
     },
     subtitle: String,
     description: String,
     image:String,
+    welcomeIntro: { type: WelcomeIntroSchema, default: () => ({}) },
     sections: [SectionSchema],
     active: {
-        type: Boolean, 
-        default: true 
+        type: Boolean,
+        default: true
     }
   }, { timestamps: true });
 

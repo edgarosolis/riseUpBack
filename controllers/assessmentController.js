@@ -131,6 +131,53 @@ const updateQuestion = async(req, res)=>{
     }
 }
 
+const updateSection = async(req, res)=>{
+    const { id, sectionCustomId } = req.params;
+    const { title, subtitle, description, reviewerDescription } = req.body;
+    try {
+        const assessment = await Assessment.findById(id);
+        if(!assessment) return res.status(404).json({msg:"Assessment not found"});
+
+        const section = assessment.sections.find(s => s.customId === sectionCustomId);
+        if(!section) return res.status(404).json({msg:"Section not found"});
+
+        if(title !== undefined) section.title = title;
+        if(subtitle !== undefined) section.subtitle = subtitle;
+        if(description !== undefined) section.description = description;
+        if(reviewerDescription !== undefined) section.reviewerDescription = reviewerDescription;
+
+        await assessment.save();
+        return res.json({msg:"Section updated", assessment});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error", error});
+    }
+}
+
+const updateWelcomeIntro = async(req, res)=>{
+    const { id } = req.params;
+    const { welcomeIntro } = req.body;
+    try {
+        const assessment = await Assessment.findById(id);
+        if(!assessment) return res.status(404).json({msg:"Assessment not found"});
+
+        assessment.welcomeIntro = {
+            headings: Array.isArray(welcomeIntro?.headings) ? welcomeIntro.headings : [],
+            intro: welcomeIntro?.intro || "",
+            bulletsLead: welcomeIntro?.bulletsLead || "",
+            bullets: Array.isArray(welcomeIntro?.bullets) ? welcomeIntro.bullets : [],
+            closingParagraphs: Array.isArray(welcomeIntro?.closingParagraphs) ? welcomeIntro.closingParagraphs : [],
+            callToAction: welcomeIntro?.callToAction || ""
+        };
+
+        await assessment.save();
+        return res.json({msg:"Welcome intro updated", assessment});
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({msg:"Server error", error});
+    }
+}
+
 module.exports = {
     getAllAssessments,
     getAssessmentById,
@@ -139,4 +186,6 @@ module.exports = {
     deleteAssessment,
     updateQuestionReviewerText,
     updateQuestion,
+    updateSection,
+    updateWelcomeIntro,
 }

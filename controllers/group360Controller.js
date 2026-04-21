@@ -445,6 +445,8 @@ const getFinalResults360 = async (countsBySection, assessmentId) => {
     return fullReport;
 };
 
+const UNABLE_TO_RESPOND = "Unable to respond";
+
 const computeCategoryCounts = (submissions, assessment) => {
     const counts = {};
     submissions.forEach(submission => {
@@ -455,6 +457,7 @@ const computeCategoryCounts = (submissions, assessment) => {
             section.questions.forEach(question => {
                 const userChoice = submission.answers.find(a => a.customId === question.customId);
                 if(userChoice){
+                    if(userChoice.value === UNABLE_TO_RESPOND) return;
                     const selectedOption = question.options.find(opt => opt.text === userChoice.value);
                     if(selectedOption && selectedOption.category){
                         const cat = selectedOption.category;
