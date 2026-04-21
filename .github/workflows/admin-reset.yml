@@ -1,0 +1,32 @@
+name: Admin Password Reset (one-shot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Admin email to reset'
+        required: true
+        type: string
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset admin password via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: EMAIL
+          script_stop: true
+          script: |
+            cd /home/ubuntu/riseup-backend
+            NEWPASS="Rise$(date +%s)!$(openssl rand -hex 3)"
+            echo "Running reset for $EMAIL"
+            node scripts/resetAdminPasswordDirect.js "$EMAIL" "$NEWPASS"
+            echo "=============================="
+            echo "NEW PASSWORD: $NEWPASS"
+            echo "=============================="
+        env:
+          EMAIL: ${{ inputs.email }}
