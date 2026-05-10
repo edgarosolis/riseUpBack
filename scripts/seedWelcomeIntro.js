@@ -20,7 +20,7 @@ const welcomeIntro = {
     bulletsLead: "In just a few minutes, you'll discover:",
     bullets: [
         { bold: "Your Sphere of Influence", text: " — where you're uniquely called to lead (business, ministry, education, etc.)." },
-        { bold: "Your 5-Fold Personality", text: " — how you express God's heart (apostolic, prophetic, evangelistic, shepherd, or teacher personalities)." },
+        { bold: "Your Five-Fold Personality", text: " — how you express God's heart (apostolic, prophetic, evangelistic, shepherd, or teacher personalities)." },
         { bold: "Your Biblical DNA", text: " — which biblical leaders reflect your gifts and style." }
     ],
     closingParagraphs: [

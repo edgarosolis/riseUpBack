@@ -19,12 +19,29 @@ const Assessment = require("../models/assessment");
 const transformQuestionText = (text) => {
     if (!text) return text;
 
+    // Match both straight (') and curly (’) apostrophes in contractions
+    const APOS = "['’]";
+
     let transformed = text;
 
-    // Order matters: longer patterns first to avoid partial matches
-    // "your" before "you", "yourself" before "your"
+    // Order matters: longer patterns and contractions first to avoid partial matches
     transformed = transformed.replace(/\bYourself\b/g, '{name}');
     transformed = transformed.replace(/\byourself\b/g, '{name}');
+    // Contractions — must run before bare "you/Your"
+    transformed = transformed.replace(new RegExp(`\\bYou${APOS}re\\b`, 'g'), '{name} is');
+    transformed = transformed.replace(new RegExp(`\\byou${APOS}re\\b`, 'g'), '{name} is');
+    transformed = transformed.replace(new RegExp(`\\bYou${APOS}ll\\b`, 'g'), '{name} will');
+    transformed = transformed.replace(new RegExp(`\\byou${APOS}ll\\b`, 'g'), '{name} will');
+    transformed = transformed.replace(new RegExp(`\\bYou${APOS}ve\\b`, 'g'), '{name} has');
+    transformed = transformed.replace(new RegExp(`\\byou${APOS}ve\\b`, 'g'), '{name} has');
+    transformed = transformed.replace(new RegExp(`\\bYou${APOS}d\\b`, 'g'), '{name} would');
+    transformed = transformed.replace(new RegExp(`\\byou${APOS}d\\b`, 'g'), '{name} would');
+    transformed = transformed.replace(/\bYou are\b/g, '{name} is');
+    transformed = transformed.replace(/\byou are\b/g, '{name} is');
+    transformed = transformed.replace(/\bYou have\b/g, '{name} has');
+    transformed = transformed.replace(/\byou have\b/g, '{name} has');
+    transformed = transformed.replace(/\bYou will\b/g, '{name} will');
+    transformed = transformed.replace(/\byou will\b/g, '{name} will');
     transformed = transformed.replace(/\bYour\b/g, "{name}'s");
     transformed = transformed.replace(/\byour\b/g, "{name}'s");
     transformed = transformed.replace(/\bYou\b/g, '{name}');

@@ -17,11 +17,11 @@ In this section, you'll help {name} explore where their leadership belongs. Ther
 
 For each of the questions below, many choices may be good for {name}, but please choose the ONE answer you believe fits them best.`,
 
-    'Five-Fold Personality Leaning': `In Ephesians 4, Scripture tells us that Jesus gave 5-fold gifts—apostle, prophet, evangelist, shepherd, and teacher—to equip and build up the Church. These are leadership offices, given to some.
+    'Five-Fold Personality Leaning': `In Ephesians 4, Scripture tells us that Jesus gave five-fold gifts—apostle, prophet, evangelist, shepherd, and teacher—to equip and build up the Church. These are leadership offices, given to some.
 
-But there's also something broader: the 5-fold personality. Every believer reflects part of Jesus' heart, and these five expressions describe the full range of His leadership style. That means while not everyone carries a 5-fold office, each of us carries a 5-fold leaning.
+But there's also something broader: the five-fold personality. Every believer reflects part of Jesus' heart, and these five expressions describe the full range of His leadership style. That means while not everyone carries a five-fold office, each of us carries a five-fold leaning.
 
-Someone's 5-fold personality reveals the way they most naturally lead:
+Someone's five-fold personality reveals the way they most naturally lead:
 
 <strong>Apostolic</strong> – pioneering, building, and advancing new ground.
 <strong>Prophetic</strong> – seeing and speaking God's heart.
