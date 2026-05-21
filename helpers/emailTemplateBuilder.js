@@ -38,6 +38,19 @@ const buildEmailHtml = (slug, content) => {
             <p style="margin: 5px 0;"><strong>Password:</strong> {{password}}</p>
         </div>
         ${footerText ? `<p style="color: #999; font-size: 12px; margin-top: 20px;">${footerText}</p>` : ''}`;
+    } else if (slug === 'user-welcome') {
+        contentHtml = `
+        ${greeting ? `<p style="color: #666; font-size: 16px; margin-bottom: 10px;">${greeting}</p>` : ''}
+        ${bodyParagraphs}
+        ${buttonText ? `
+        <a href="{{loginUrl}}" style="display: inline-block; background-color: #F4C542; color: #000; font-weight: bold; font-size: 18px; padding: 14px 40px; border-radius: 8px; text-decoration: none; margin-top: 10px;">
+            ${buttonText}
+        </a>` : ''}
+        ${footerText ? `
+        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+            ${footerText}<br>
+            <a href="{{loginUrl}}" style="color: #007bff;">{{loginUrl}}</a>
+        </p>` : ''}`;
     } else {
         // 360 invitation & reminder templates
         contentHtml = `
@@ -84,6 +97,8 @@ const buildTextBody = (slug, content) => {
     } else if (slug === 'admin-welcome') {
         parts.push('Email: {{email}}');
         parts.push('Password: {{password}}');
+    } else if (slug === 'user-welcome') {
+        parts.push('{{loginUrl}}');
     } else {
         parts.push('{{reviewUrl}}');
     }

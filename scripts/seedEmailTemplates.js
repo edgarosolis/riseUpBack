@@ -45,6 +45,20 @@ const templates = [
             footerText: "If the button doesn't work, copy and paste this link into your browser:"
         },
         variables: ['reviewerName', 'revieweeName', 'reviewUrl']
+    },
+    {
+        slug: 'user-welcome',
+        name: 'New Learner Welcome',
+        subject: 'Welcome to Rise Up — {{assessmentName}} is ready',
+        content: {
+            heading: 'Rise Up Culture',
+            greeting: 'Hi {{firstName}},',
+            bodyText: "Thank you for your purchase. **{{assessmentName}}** is ready for you on the Rise Up assessment platform.\nTo sign in, click the button below and enter the 6-digit code we'll send to **{{email}}**. No password needed.",
+            buttonText: 'Start Your Assessment',
+            expiryText: '',
+            footerText: "If the button doesn't work, copy and paste this link into your browser:"
+        },
+        variables: ['firstName', 'email', 'loginUrl', 'assessmentName']
     }
 ];
 

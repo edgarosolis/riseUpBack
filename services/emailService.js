@@ -259,9 +259,81 @@ const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) =
     }
 };
 
+/**
+ * Send a welcome email to a newly provisioned learner.
+ * Used after a LearnWorlds purchase creates a Rise Up user.
+ * @param {string} email - Recipient email address
+ * @param {string} firstName - Recipient first name
+ * @param {string} loginUrl - URL to the OTP login page (typically with ?email= prefilled)
+ * @param {string} [assessmentName] - Human-readable assessment label (optional)
+ * @returns {Promise<boolean>}
+ */
+const sendWelcomeEmail = async (email, firstName, loginUrl, assessmentName = '') => {
+    let subject, htmlBody, textBody;
+    const vars = {
+        firstName: firstName || 'there',
+        email,
+        loginUrl,
+        assessmentName: assessmentName || 'your assessment',
+    };
+
+    try {
+        const template = await EmailTemplate.findOne({ slug: 'user-welcome' });
+        if (template) {
+            subject = interpolate(template.subject, vars);
+            htmlBody = interpolate(template.htmlBody, vars);
+            textBody = interpolate(template.textBody, vars);
+        }
+    } catch (e) {
+        console.log('Failed to load user-welcome template from DB, using fallback:', e);
+    }
+
+    if (!htmlBody) {
+        subject = `Welcome to Rise Up — ${vars.assessmentName} is ready`;
+        htmlBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; text-align: center;">
+                <h1 style="color: #333; margin-bottom: 20px;">Rise Up Culture</h1>
+                <p style="color: #666; font-size: 16px; margin-bottom: 10px;">Hi ${vars.firstName},</p>
+                <p style="color: #666; font-size: 16px; margin-bottom: 20px;">
+                    Thank you for your purchase. ${vars.assessmentName} is ready for you on the Rise Up assessment platform.
+                </p>
+                <p style="color: #666; font-size: 16px; margin-bottom: 30px;">
+                    To sign in, click the button below and enter the 6-digit code we'll send to <strong>${email}</strong>. No password needed.
+                </p>
+                <a href="${loginUrl}" style="display: inline-block; background-color: #F4C542; color: #000; font-weight: bold; font-size: 18px; padding: 14px 40px; border-radius: 8px; text-decoration: none;">
+                    Start Your Assessment
+                </a>
+                <p style="color: #999; font-size: 12px; margin-top: 30px;">
+                    If the button doesn't work, copy and paste this link into your browser:<br>
+                    <a href="${loginUrl}" style="color: #007bff;">${loginUrl}</a>
+                </p>
+            </div>
+        </body>
+        </html>`;
+        textBody = `Hi ${vars.firstName}, thank you for your purchase. ${vars.assessmentName} is ready on the Rise Up assessment platform. Sign in here: ${loginUrl}`;
+    }
+
+    try {
+        await sendEmail(email, subject, htmlBody, textBody);
+        console.log(`Welcome email sent via ${EMAIL_PROVIDER} to ${email}`);
+        return true;
+    } catch (error) {
+        console.error(`Error sending welcome email via ${EMAIL_PROVIDER}:`, error);
+        throw error;
+    }
+};
+
 module.exports = {
     sendEmail,
     sendOTPEmail,
     sendInvitationEmail,
-    sendReminderEmail
+    sendReminderEmail,
+    sendWelcomeEmail,
 };

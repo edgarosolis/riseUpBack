@@ -3,51 +3,17 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const bcryptjs = require('bcryptjs');
 const Submission = require("../models/submission");
-const Assessment = require("../models/assessment");
-const Group = require("../models/group");
 const Group360 = require("../models/group360");
 const Submission360 = require("../models/submission360");
 const csv = require('csv-parser');
 const fs = require('fs');
 const { sendEmail } = require('../services/emailService');
 const EmailTemplate = require('../models/emailTemplate');
-
-// Helper: provision Group + Group360 for a user
-const provision360 = async (userId, firstName) => {
-    // If a Group360 already exists for this user, return it instead of creating a duplicate
-    const existing = await Group360.findOne({ reviewee: userId });
-    if (existing) {
-        const existingGroup = await Group.findById(existing.group);
-        return { group: existingGroup, group360: existing };
-    }
-
-    const assessment = await Assessment.findOne({ active: true });
-    if (!assessment) throw new Error("No active assessment found");
-
-    const group = await Group.create({
-        name: `${firstName}'s Team`,
-        members: [userId],
-        assessmentId: assessment._id,
-    });
-
-    const group360 = await Group360.create({
-        assessmentId: assessment._id,
-        reviewee: userId,
-        group: group._id,
-    });
-
-    return { group, group360 };
-};
-
-// Helper: deprovision ALL Group360s for a user
-const deprovision360 = async (userId) => {
-    const group360s = await Group360.find({ reviewee: userId });
-    for (const g360 of group360s) {
-        await Submission360.deleteMany({ groupId: g360.group });
-        await Group360.findByIdAndDelete(g360._id);
-        await Group.findByIdAndDelete(g360.group);
-    }
-};
+const {
+    provisionUser,
+    provision360,
+    deprovision360,
+} = require('../services/userProvisioningService');
 
 
 const getAllUsers = async(req=request,res=response)=>{
@@ -177,23 +143,7 @@ const createUser = async(req,res=response)=>{
         });
     }
 
-    const user = new User({email,firstName,lastName,rol:"user", has360: has360 || false});
-
-    const submission = new Submission({
-        assessmentId: "69694fa65b16328a2cd50da7", // TODO CHANGE LOGIC WHEN MORE ASSESSMENT CREATED
-        userId: user._id
-    });
-
-    await user.save();
-    await submission.save();
-
-    if (has360) {
-        try {
-            await provision360(user._id, firstName);
-        } catch (err) {
-            console.log("360 provisioning error on createUser:", err.message);
-        }
-    }
+    const { user } = await provisionUser({ email, firstName, lastName, has360 });
 
     return res.json({
         msg:"User created",
@@ -315,31 +265,12 @@ const createUsersFromCSV = async(req=request, res=response) => {
             }
 
             try {
-                // Create user (same logic as createUser)
-                const user = new User({
+                await provisionUser({
+                    email,
                     firstName,
                     lastName,
-                    email,
-                    rol: 'user',
                     has360: rowHas360,
                 });
-
-                // Create submission record
-                const submission = new Submission({
-                    assessmentId: "69694fa65b16328a2cd50da7",
-                    userId: user._id
-                });
-
-                await user.save();
-                await submission.save();
-
-                if (rowHas360) {
-                    try {
-                        await provision360(user._id, firstName);
-                    } catch (err) {
-                        console.log(`360 provisioning error for ${email}:`, err.message);
-                    }
-                }
 
                 successCount++;
                 results.push({

@@ -12,6 +12,7 @@ const submissionRouter = require("./submission");
 const submission360Router = require("./submission360");
 const userRouter = require("./user");
 const emailTemplateRouter = require("./emailTemplate");
+const integrationsRouter = require("./integrations");
 
 rootRouter.use('/assessment',assessmentRouter);
 rootRouter.use('/auth',authRouter);
@@ -24,5 +25,6 @@ rootRouter.use('/submission',submissionRouter);
 rootRouter.use('/submission360',submission360Router);
 rootRouter.use('/user',userRouter);
 rootRouter.use('/emailTemplate',emailTemplateRouter);
+rootRouter.use('/integrations',integrationsRouter);
 
 module.exports = rootRouter;
