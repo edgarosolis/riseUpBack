@@ -68,6 +68,7 @@ const provision = async (req, res = response) => {
             firstName,
             lastName,
             has360: mapping.has360,
+            source: 'learnworlds',
         });
     } catch (err) {
         console.log('provisionUser error in Zapier controller:', err.message);

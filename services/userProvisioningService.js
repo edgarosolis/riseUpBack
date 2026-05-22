@@ -64,7 +64,7 @@ const ensureKingdomCallingSubmission = async (userId) => {
  * Returns { user, wasCreated, wasUpgraded } so callers can decide whether
  * to send a first-time welcome email.
  */
-const provisionUser = async ({ email, firstName, lastName, has360 = false }) => {
+const provisionUser = async ({ email, firstName, lastName, has360 = false, source = 'manual' }) => {
     if (!email) throw new Error('email is required');
 
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -81,6 +81,7 @@ const provisionUser = async ({ email, firstName, lastName, has360 = false }) => 
             lastName,
             rol: 'user',
             has360: wantsHas360,
+            source,
         });
         wasCreated = true;
     } else if (wantsHas360 && !user.has360) {

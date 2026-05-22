@@ -33,6 +33,11 @@ const UserSchema = Schema({
     has360:{
         type:Boolean,
         default: false
+    },
+    source:{
+        type:String,
+        enum: ['manual', 'learnworlds'],
+        default: 'manual'
     }
 },{timestamps:true});
 
