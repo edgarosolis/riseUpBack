@@ -20,11 +20,14 @@ const sesClient = new SESClient({
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'melissa@theriseupculture.com';
 
 /**
- * Replace {{variable}} placeholders with actual values
+ * Replace {{variable}} placeholders with actual values.
+ * Any placeholder without a (non-empty) value is stripped rather than left in
+ * place — recipients must never see a raw "{{revieweeName}}" token.
  */
 const interpolate = (template, variables) => {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-        return variables[key] !== undefined ? variables[key] : match;
+        const val = variables[key];
+        return val === undefined || val === null ? '' : String(val);
     });
 };
 
@@ -135,6 +138,10 @@ const sendOTPEmail = async (email, code) => {
  */
 const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
     let subject, htmlBody, textBody;
+    // Safety net: never email a blank/raw name. Normalized provisioning should
+    // keep these populated, but fall back to neutral copy just in case.
+    reviewerName = String(reviewerName || '').trim() || 'there';
+    revieweeName = String(revieweeName || '').trim() || 'a colleague';
     const vars = { reviewerName, revieweeName, reviewUrl };
 
     try {
@@ -202,6 +209,9 @@ const sendInvitationEmail = async (email, reviewerName, revieweeName, reviewUrl)
  */
 const sendReminderEmail = async (email, reviewerName, revieweeName, reviewUrl) => {
     let subject, htmlBody, textBody;
+    // Safety net: never email a blank/raw name (see sendInvitationEmail).
+    reviewerName = String(reviewerName || '').trim() || 'there';
+    revieweeName = String(revieweeName || '').trim() || 'a colleague';
     const vars = { reviewerName, revieweeName, reviewUrl };
 
     try {

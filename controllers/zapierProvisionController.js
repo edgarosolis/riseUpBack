@@ -35,7 +35,7 @@ const provision = async (req, res = response) => {
         return res.status(401).json({ status: 'unauthorized' });
     }
 
-    const { email, firstName, lastName, productId, eventId } = req.body || {};
+    const { email, firstName, lastName, name, fullName, username, productId, eventId } = req.body || {};
 
     if (!email || !productId || !eventId) {
         return res.status(400).json({
@@ -67,6 +67,9 @@ const provision = async (req, res = response) => {
             email,
             firstName,
             lastName,
+            name,
+            fullName,
+            username,
             has360: mapping.has360,
             source: 'learnworlds',
         });
