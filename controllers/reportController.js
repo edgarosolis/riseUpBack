@@ -66,7 +66,25 @@ const getFinalResults = async (countsBySection, assessmentId) => {
         });
          
         const topTwo = sorted.slice(0, 2); 
-        const [first,second] = topTwo;
+
+        // A section can have a single category (every answer the same) or none at all
+        // (answers no longer match option text). Guard both so one section never
+        // crashes the whole report.
+        if (topTwo.length === 0) {
+            fullReport.push({
+                section: sectionKey,
+                topCategories: [],
+                keyUsed: [],
+                content: {
+                    title: "No result",
+                    content: "NOT FOUND"
+                }
+            });
+            continue;
+        }
+
+        const first = topTwo[0];
+        const second = topTwo[1] || [null, 0];
         let searchQueries = new Set();
 
         if(sectionKey === "s1"){
