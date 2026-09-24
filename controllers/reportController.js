@@ -10,6 +10,13 @@ const getReportInfo = async(req,res) =>{
         const submission = await Submission.findOne({assessmentId,userId,active:true});
         const assessment = await Assessment.findById(assessmentId);
 
+        if (!submission) {
+            return res.status(404).json({
+                msg: 'No active submission for this user.',
+                report: null
+            });
+        }
+
 
         const countsBySection = {};
 
